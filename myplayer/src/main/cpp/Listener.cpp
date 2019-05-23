@@ -3,7 +3,7 @@
 //
 
 
-#include "../../../../../../Android/NDK/android-ndk-r14b/platforms/android-17/arch-x86/usr/include/jni.h"
+#include "jni.h"
 #include "Listener.h"
 
 Listener::Listener(JavaVM *vm, _JNIEnv *env, jobject obj) {

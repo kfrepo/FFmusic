@@ -56,6 +56,8 @@ add_library( # Sets the name of the library.
         SHARED
         src/main/cpp/native-lib.cpp
         src/main/cpp/FFCallJava.cpp
+        src/main/cpp/FFAudio.cpp
+        src/main/cpp/MFFmpeg.cpp
         ${native_srcs})
 
 find_library(

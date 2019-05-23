@@ -1,0 +1,41 @@
+//
+// Created by workw on 2019/5/23.
+//
+
+#ifndef FFMUSIC_FFAUDIO_H
+#define FFMUSIC_FFAUDIO_H
+
+#include <cwchar>
+
+extern "C"{
+#include <libavcodec/avcodec.h>
+};
+
+
+class FFAudio {
+
+public:
+    int streamIndex = -1;
+    AVCodecContext *avCodecContext = NULL;//描述编解码器上下文
+    AVCodecParameters *codecpar = NULL;// 包含音视频参数的结构体。很重要，可以用来获取音视频参数中的宽度、高度、采样率、编码格式等信息
+
+public:
+    FFAudio();
+    ~FFAudio();
+};
+
+
+#endif //FFMUSIC_FFAUDIO_H
+/***
+ * AVCodecParameters
+enum AVMediaType codec_type; 　　　// 编码类型。说明这段流数据究竟是音频还是视频。
+enum AVCodecID codec_id     　　　// 编码格式。说明这段流的编码格式，h264，MPEG4, MJPEG，etc...
+
+uint32_t  codecTag;        //  一般不用
+int format;                //  格式。对于视频来说指的就是像素格式(YUV420,YUV422...)，对于音频来说，指的就是音频的采样格式。
+int width, int height;     // 视频的宽高，只有视频有
+uint64_t channel_layout;   // 取默认值即可
+int channels;               // 声道数
+int sample_rate;            // 样本率
+int frame_size;             // 只针对音频，一帧音频的大小
+ ***/

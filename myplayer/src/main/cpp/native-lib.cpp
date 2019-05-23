@@ -4,6 +4,7 @@
 #include "AndroidLog.h"
 #include "Listener.h"
 #include "FFCallJava.h"
+#include "MFFmpeg.h"
 
 extern "C"{
 #include "include/libavformat/avformat.h"
@@ -154,17 +155,33 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void* reserved) {
 
 
 
-//
+/***********************音频播放*********************************/
 FFCallJava *callJava = NULL;
 _JavaVM *javaVM = NULL;
+MFFmpeg *mfFmpeg = NULL;
+
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_wguet_myplayer_player_FFPlayer_n_1prepared(JNIEnv *env, jobject instance,
                                                     jstring source_) {
     const char *source = env->GetStringUTFChars(source_, 0);
 
-    // TODO
+    if(mfFmpeg == NULL){
+        if(callJava == NULL){
+            callJava = new FFCallJava(javaVM, env, &instance);
+        }
+        mfFmpeg = new MFFmpeg(callJava, source);
+        mfFmpeg->parpared();
+    }
 
     env->ReleaseStringUTFChars(source_, source);
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_wguet_myplayer_player_FFPlayer_start(JNIEnv *env, jobject instance) {
+
+    // TODO
+
+}

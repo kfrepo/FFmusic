@@ -53,5 +53,7 @@ public class FFPlayer {
     }
 
     public native void n_prepared(String source);
-//    public native void n_start();
+
+    public native void start();
+
 }

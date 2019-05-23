@@ -7,7 +7,9 @@ import android.view.View;
 import android.widget.Button;
 
 import com.wguet.myplayer.Demo;
+import com.wguet.myplayer.listener.FFOnPreparedListener;
 import com.wguet.myplayer.player.FFPlayer;
+import com.wguet.myplayer.util.LogUtil;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +29,13 @@ public class MainActivity extends AppCompatActivity {
         startPlay = (Button) findViewById(R.id.buttons);
 
         ffPlayer = new FFPlayer();
+        ffPlayer.setPreparedListener(new FFOnPreparedListener() {
+            @Override
+            public void onPrepared() {
+                LogUtil.d("准备好 开始播放音频！");
+                ffPlayer.start();
+            }
+        });
 
 
         startPlay.setOnClickListener(new View.OnClickListener() {
@@ -42,9 +51,9 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
-//        demo = new Demo();
-//        demo.testFFmpeg();
+        Demo demo;
+        demo = new Demo();
+        demo.testFFmpeg();
 //        demo.setOnErrotListener(new Demo.OnErrotListener() {
 //            @Override
 //            public void onError(int code, String msg) {
