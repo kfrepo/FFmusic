@@ -24,10 +24,11 @@ void MFFmpeg::parpared() {
 
 void MFFmpeg::decodeFFmpegThread() {
 
+
     av_register_all();
     avformat_network_init();
     pAVFormatCtx = avformat_alloc_context();
-
+    LOGE("avformat_open_input !");
     //打开一个文件并解析。可解析的内容包括：视频流、音频流、视频流参数、音频流参数、视频帧索引
     if(avformat_open_input(&pAVFormatCtx, url, NULL, NULL) != 0){
 
@@ -84,7 +85,7 @@ void MFFmpeg::decodeFFmpegThread() {
         return;
     }
 
-    //该函数用于初始化一个视音频编解码器的AVCodecContext。位于libavcodec\avcodec.h
+    //该函数用于初始化一个视音频编解码器的AVCodecContext,位于libavcodec\avcodec.h
     if(avcodec_open2(audio->avCodecContext, dec, 0) != 0){
         if(LOG_DEBUG){
             LOGE("cant not open audio strames");
@@ -93,4 +94,44 @@ void MFFmpeg::decodeFFmpegThread() {
     }
     callJava->onCallPrepared(CHILD_THREAD);
 
+}
+
+void MFFmpeg::start() {
+
+    if(audio == NULL){
+
+        if(LOG_DEBUG){
+            LOGE("audio is null");
+            return;
+        }
+    }
+
+    int count = 0;
+
+    while(1){
+        AVPacket *avPacket = av_packet_alloc();
+        if(av_read_frame(pAVFormatCtx, avPacket) == 0){
+
+            if(avPacket->stream_index == audio->streamIndex){
+                //解码操作
+                count++;
+                if(LOG_DEBUG){
+                    LOGE("解码第 %d 帧", count);
+                }
+                av_packet_free(&avPacket);
+                av_free(avPacket);
+
+            } else{
+                av_packet_free(&avPacket);
+                av_free(avPacket);
+            }
+        } else{
+            if(LOG_DEBUG){
+                LOGE("decode finished");
+            }
+            av_packet_free(&avPacket);
+            av_free(avPacket);
+            break;
+        }
+    }
 }

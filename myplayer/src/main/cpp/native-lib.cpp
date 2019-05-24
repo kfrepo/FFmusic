@@ -158,7 +158,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void* reserved) {
 /***********************音频播放*********************************/
 FFCallJava *callJava = NULL;
 _JavaVM *javaVM = NULL;
-MFFmpeg *mfFmpeg = NULL;
+MFFmpeg *mFFmpeg = NULL;
 
 
 extern "C"
@@ -166,22 +166,26 @@ JNIEXPORT void JNICALL
 Java_com_wguet_myplayer_player_FFPlayer_n_1prepared(JNIEnv *env, jobject instance,
                                                     jstring source_) {
     const char *source = env->GetStringUTFChars(source_, 0);
-
-    if(mfFmpeg == NULL){
+    LOGI("native n_1prepared %s", source);
+    if(mFFmpeg == NULL){
         if(callJava == NULL){
             callJava = new FFCallJava(javaVM, env, &instance);
         }
-        mfFmpeg = new MFFmpeg(callJava, source);
-        mfFmpeg->parpared();
+        mFFmpeg = new MFFmpeg(callJava, source);
+        mFFmpeg->parpared();
     }
 
     env->ReleaseStringUTFChars(source_, source);
 }
 
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_wguet_myplayer_player_FFPlayer_start(JNIEnv *env, jobject instance) {
 
-    // TODO
+
+    if(mFFmpeg != NULL){
+        mFFmpeg->start();
+    }
 
 }

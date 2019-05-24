@@ -40,8 +40,7 @@ void FFCallJava::onCallPrepared(int type) {
         //绑定当前线程到JavaVM，并获取的JNIEnv
         if(javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK)
         {
-            if(LOG_DEBUG)
-            {
+            if(LOG_DEBUG){
                 LOGE("get child thread jnienv worng");
             }
             return;
