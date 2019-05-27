@@ -1,10 +1,7 @@
-
 #include "jni.h"
-
 
 #ifndef FFMUSIC_LISTENER_H  //先测试x是否被宏定义过
 #define FFMUSIC_LISTENER_H
-
 
 class Listener {
 
@@ -14,9 +11,7 @@ public:
     jobject  jobj;
     jmethodID jmid;
 
-
 public:
-
     Listener(JavaVM *vm, _JNIEnv *env, jobject obj);
     ~Listener();
 
@@ -29,6 +24,5 @@ public:
      */
     void onError(int type, int code, const char *msg);
 };
-
 
 #endif //FFMUSIC_LISTENER_H

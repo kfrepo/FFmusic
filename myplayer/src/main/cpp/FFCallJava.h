@@ -5,24 +5,23 @@
 #ifndef FFMUSIC_FFCALLJAVA_H
 #define FFMUSIC_FFCALLJAVA_H
 
-
-#include <cwchar>
+#include <linux/stddef.h>
 #include "jni.h"
-
+#include "AndroidLog.h"
 
 #define MAIN_THREAD 0
 #define CHILD_THREAD 1
 
 class FFCallJava {
 public:
-    _JavaVM *javaVM = NULL;
-    JNIEnv *jniEnv = NULL;
+    _JavaVM *javaVM;
+    JNIEnv *jniEnV;
     jobject jobj;
 
     jmethodID jmid_prepared;
 
 public:
-    FFCallJava(_JavaVM *javaVM, JNIEnv *jniEnv, jobject *job);
+    FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job);
     ~FFCallJava();
 
     void onCallPrepared(int type);

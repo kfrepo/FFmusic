@@ -12,7 +12,6 @@ extern "C"{
 #include "include/libavutil/avutil.h"
 }
 
-
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_wguet_myplayer_Demo_testFFmpeg(JNIEnv *env, jobject instance) {
@@ -43,7 +42,6 @@ void *threadCallBack(void *data){
 
     LOGI("thread threadCallBack !");
     pthread_exit(&thread);
-
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -115,7 +113,7 @@ Java_com_wguet_myplayer_Demo_mutexThread(JNIEnv *env, jobject instance) {
 
 /*********************************调用Java 方法***************************************/
 
-JavaVM *jvm;
+_JavaVM *jvm = NULL;
 
 Listener *javaListener;
 pthread_t chidlThread;
@@ -143,7 +141,12 @@ Java_com_wguet_myplayer_Demo_callbackFromC(JNIEnv *env, jobject instance) {
 }
 
 
-/*获取JVM对象*/
+/**
+ * 1.获取JVM对象
+ * @param vm
+ * @param reserved
+ * @return
+ */
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void* reserved) {
     JNIEnv *env;
     jvm = vm;
@@ -153,36 +156,50 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void* reserved) {
     return JNI_VERSION_1_6;
 }
 
+/**
+ * 2.获取JVM对象
+ */
+//extern "C"
+//JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved){
+//    jint result = -1;
+//    javaVM = vm;
+//    JNIEnv *env;
+//    if(vm->GetEnv((void **) &env, JNI_VERSION_1_4) != JNI_OK)
+//    {
+//
+//        return result;
+//    }
+//    return JNI_VERSION_1_4;
+//
+//}
+
 
 
 /***********************音频播放*********************************/
 FFCallJava *callJava = NULL;
-_JavaVM *javaVM = NULL;
 MFFmpeg *mFFmpeg = NULL;
 
+PlayStatus *playStatus = NULL;
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_wguet_myplayer_player_FFPlayer_n_1prepared(JNIEnv *env, jobject instance,
-                                                    jstring source_) {
+Java_com_wguet_myplayer_player_FFPlayer_n_1prepared(JNIEnv *env, jobject instance, jstring source_) {
+
     const char *source = env->GetStringUTFChars(source_, 0);
-    LOGI("native n_1prepared %s", source);
     if(mFFmpeg == NULL){
         if(callJava == NULL){
-            callJava = new FFCallJava(javaVM, env, &instance);
+            callJava = new FFCallJava(jvm, env, &instance);
         }
-        mFFmpeg = new MFFmpeg(callJava, source);
+        playStatus = new PlayStatus();
+        mFFmpeg = new MFFmpeg(playStatus, callJava, source);
         mFFmpeg->parpared();
     }
-
     env->ReleaseStringUTFChars(source_, source);
 }
-
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_wguet_myplayer_player_FFPlayer_start(JNIEnv *env, jobject instance) {
-
 
     if(mFFmpeg != NULL){
         mFFmpeg->start();

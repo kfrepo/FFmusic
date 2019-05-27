@@ -17,14 +17,15 @@ extern "C"
 class MFFmpeg {
 
 public:
-    FFCallJava *callJava = NULL;
-    const char* url = NULL;
+    FFCallJava *callJava;
+    const char* url;
     pthread_t decodeThread;
-    AVFormatContext *pAVFormatCtx = NULL;//整个媒体流的处理流程中都会用到的对象,媒体文件或媒体流的构成和基本信息
+    AVFormatContext *pAVFormatCtx;//整个媒体流的处理流程中都会用到的对象,媒体文件或媒体流的构成和基本信息
     FFAudio *audio = NULL;
+    PlayStatus *playstatus = NULL;
 
 public:
-    MFFmpeg(FFCallJava *callJava, const char *url);
+    MFFmpeg(PlayStatus *playStatus, FFCallJava *callJava, const char *url);
     ~MFFmpeg();
 
     void parpared();

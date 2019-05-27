@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
         startPlay = (Button) findViewById(R.id.buttons);
 
         ffPlayer = new FFPlayer();
+
         ffPlayer.setPreparedListener(new FFOnPreparedListener() {
             @Override
             public void onPrepared() {

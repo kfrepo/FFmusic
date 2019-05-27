@@ -4,7 +4,9 @@
 
 #include "FFAudio.h"
 
-FFAudio::FFAudio() {
+FFAudio::FFAudio(PlayStatus *playStatus) {
+    this->playstatus = playStatus;
+    queue = new AVPacketQueue(playstatus);
 
 };
 
