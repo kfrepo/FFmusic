@@ -3,7 +3,7 @@
 //
 
 #include "AVPacketQueue.h"
-#include "AndroidLog.h"
+
 
 AVPacketQueue::AVPacketQueue(PlayStatus *playStatus) {
     this->playStatus = playStatus;
@@ -21,8 +21,11 @@ int AVPacketQueue::putAVpacket(AVPacket *packet) {
 
     queuePacket.push(packet);
     LOGI("Add a AVPacket to queue, count:%d", queuePacket.size());
+
     pthread_cond_signal(&condPacket);
     pthread_mutex_unlock(&mutexPacket);
+
+    return 0;
 }
 
 int AVPacketQueue::popAVpacket(AVPacket *packet) {

@@ -9,6 +9,7 @@
 #include <queue>
 #include "pthread.h"
 #include "PlayStatus.h"
+#include "AndroidLog.h"
 
 extern "C"{
 #include <libavcodec/avcodec.h>
@@ -21,7 +22,7 @@ public:
     std::queue<AVPacket *> queuePacket;
     pthread_mutex_t mutexPacket;//线程锁
     pthread_cond_t condPacket;//条件对象
-    PlayStatus *playStatus;
+    PlayStatus *playStatus = NULL;
 
 public:
     AVPacketQueue(PlayStatus *playStatus);

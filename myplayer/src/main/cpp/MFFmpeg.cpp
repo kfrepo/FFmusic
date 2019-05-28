@@ -111,13 +111,16 @@ void MFFmpeg::start() {
         }
     }
     LOGE("audio start decode!");
+    audio->play();
     int count = 0;
-    while(1){
+    while(1)
+    {
         //分配一个结构体大小的内存,返回的是一个AVPacket的一个指针
         AVPacket *avPacket = av_packet_alloc();
 
         //读取具体的音/视频帧数据
-        if(av_read_frame(pAVFormatCtx, avPacket) == 0){
+        if(av_read_frame(pAVFormatCtx, avPacket) == 0)
+        {
             //stream_index：标识该AVPacket所属的视频/音频流
             if(avPacket->stream_index == audio->streamIndex){
                 //解码操作
@@ -140,7 +143,7 @@ void MFFmpeg::start() {
             break;
         }
     }
-    return;
+
     //模拟出队
     while (audio->queue->getQueueSize() > 0){
         AVPacket *packet = av_packet_alloc();
@@ -149,8 +152,8 @@ void MFFmpeg::start() {
         av_free(packet);
         packet = NULL;
     }
-    if(LOG_DEBUG)
-        LOGE("解码完成");
+
+    LOGE("解码完成");
 
 }
 

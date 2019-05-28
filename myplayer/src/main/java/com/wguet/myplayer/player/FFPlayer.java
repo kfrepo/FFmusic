@@ -3,6 +3,7 @@ package com.wguet.myplayer.player;
 import android.text.TextUtils;
 
 import com.wguet.myplayer.listener.FFOnPreparedListener;
+import com.wguet.myplayer.util.LogUtil;
 
 public class FFPlayer {
 
@@ -33,6 +34,7 @@ public class FFPlayer {
 
     public void prepared(){
         if (TextUtils.isEmpty(source)){
+            LogUtil.e("source is null!");
             return;
         }
 
