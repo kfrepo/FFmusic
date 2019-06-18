@@ -60,6 +60,7 @@ add_library( # Sets the name of the library.
         src/main/cpp/MFFmpeg.cpp
         src/main/cpp/PlayStatus.cpp
         src/main/cpp/AVPacketQueue.cpp
+
         ${native_srcs})
 
 find_library(

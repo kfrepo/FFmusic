@@ -22,9 +22,21 @@ public:
 
     AVPacketQueue *queue;
     PlayStatus *playstatus;
+
+    pthread_t thread_play;
+    AVPacket *avPacket = NULL;
+    AVFrame *avFrame = NULL;
+    int ret = 0;
+    uint8_t  *buffer = NULL;
+    int data_size = 0;
+
+
 public:
     FFAudio(PlayStatus *playStatus);
     ~FFAudio();
+
+    void play();
+    int resampleAudio();
 };
 
 

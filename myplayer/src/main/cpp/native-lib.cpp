@@ -204,5 +204,4 @@ Java_com_wguet_myplayer_player_FFPlayer_start(JNIEnv *env, jobject instance) {
     if(mFFmpeg != NULL){
         mFFmpeg->start();
     }
-
 }

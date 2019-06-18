@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
         startPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
                 ffPlayer.prepared();
             }
@@ -52,9 +53,9 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        Demo demo;
-        demo = new Demo();
-        demo.testFFmpeg();
+//        Demo demo;
+//        demo = new Demo();
+//        demo.testFFmpeg();
 //        demo.setOnErrotListener(new Demo.OnErrotListener() {
 //            @Override
 //            public void onError(int code, String msg) {
