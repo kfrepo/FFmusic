@@ -9,7 +9,11 @@ FFAudio::FFAudio(PlayStatus *playStatus) {
     this->playstatus = playStatus;
     queue = new AVPacketQueue(playstatus);
 
+<<<<<<< HEAD
 //    buffer = (uint8_t *) av_malloc(44100 *2 *2);
+=======
+    buffer = (uint8_t *) av_malloc(44100 *2 *2);
+>>>>>>> b18df2e001e7b875347e71d03aa9c7b1d5a620c8
 
 };
 
