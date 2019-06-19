@@ -113,45 +113,75 @@ void MFFmpeg::start() {
     LOGE("audio start decode!");
     audio->play();
     int count = 0;
-    while(1)
+    while(playstatus != NULL && !playstatus->exit)
     {
-        //分配一个结构体大小的内存,返回的是一个AVPacket的一个指针
         AVPacket *avPacket = av_packet_alloc();
-
-        //读取具体的音/视频帧数据
         if(av_read_frame(pAVFormatCtx, avPacket) == 0)
         {
-            //stream_index：标识该AVPacket所属的视频/音频流
-            if(avPacket->stream_index == audio->streamIndex){
+            if(avPacket->stream_index == audio->streamIndex)
+            {
                 //解码操作
                 count++;
                 LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
-//                av_packet_free(&avPacket);
-//                av_free(avPacket);
-                audio->queue->putAVpacket(avPacket);
 
+                audio->queue->putAVpacket(avPacket);
             } else{
                 av_packet_free(&avPacket);
                 av_free(avPacket);
             }
         } else{
-
-            LOGE("decode finished");
-
             av_packet_free(&avPacket);
             av_free(avPacket);
-            break;
+            while(playstatus != NULL && !playstatus->exit)
+            {
+                if(audio->queue->getQueueSize() > 0)
+                {
+                    continue;
+                } else{
+                    playstatus->exit = true;
+                    break;
+                }
+            }
         }
     }
+//    while(1)
+//    {
+//        //分配一个结构体大小的内存,返回的是一个AVPacket的一个指针
+//        AVPacket *avPacket = av_packet_alloc();
+//
+//        //读取具体的音/视频帧数据
+//        if(av_read_frame(pAVFormatCtx, avPacket) == 0)
+//        {
+//            //stream_index：标识该AVPacket所属的视频/音频流
+//            if(avPacket->stream_index == audio->streamIndex){
+//                //解码操作
+//                count++;
+//                LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
+//                audio->queue->putAVpacket(avPacket);
+//
+//            } else{
+//                av_packet_free(&avPacket);
+//                av_free(avPacket);
+//            }
+//        } else{
+//
+//            LOGE("decode finished");
+//
+//            av_packet_free(&avPacket);
+//            av_free(avPacket);
+//            break;
+//        }
+//    }
 
-    //模拟出队
-    while (audio->queue->getQueueSize() > 0){
-        AVPacket *packet = av_packet_alloc();
-        audio->queue->popAVpacket(packet);
-        av_packet_free(&packet);
-        av_free(packet);
-        packet = NULL;
-    }
+//    //模拟出队
+//    while (audio->queue->getQueueSize() > 0){
+//
+//        AVPacket *packet = av_packet_alloc();
+//        audio->queue->popAVpacket(packet);
+//        av_packet_free(&packet);
+//        av_free(packet);
+//        packet = NULL;
+//    }
 
     LOGE("解码完成");
 

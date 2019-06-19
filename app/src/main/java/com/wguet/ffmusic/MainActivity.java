@@ -43,7 +43,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
+//                ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
+                ffPlayer.setSource("/mnt/sdcard/Music/mydream.mp3");
                 ffPlayer.prepared();
             }
         });

@@ -5,23 +5,24 @@
 #ifndef FFMUSIC_FFAUDIO_H
 #define FFMUSIC_FFAUDIO_H
 
-#include <cwchar>
 #include "AVPacketQueue.h"
+#include "PlayStatus.h"
 
 extern "C"{
 #include <libavcodec/avcodec.h>
+#include <libswresample/swresample.h>
 };
 
 
 class FFAudio {
 
 public:
-    int streamIndex;
+    int streamIndex = -1;
     AVCodecContext *avCodecContext;//描述编解码器上下文
     AVCodecParameters *codecpar;// 包含音视频参数的结构体。很重要，可以用来获取音视频参数中的宽度、高度、采样率、编码格式等信息
 
-    AVPacketQueue *queue;
-    PlayStatus *playstatus;
+    AVPacketQueue *queue = NULL;
+    PlayStatus *playstatus = NULL;
 
     pthread_t thread_play;
     AVPacket *avPacket = NULL;
