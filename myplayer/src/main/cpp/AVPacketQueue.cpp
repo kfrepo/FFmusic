@@ -20,7 +20,7 @@ int AVPacketQueue::putAVpacket(AVPacket *packet) {
     pthread_mutex_lock(&mutexPacket);
 
     queuePacket.push(packet);
-    LOGI("Add a AVPacket to queue, count:%d", queuePacket.size());
+//    LOGI("Add a AVPacket to queue, count:%d", queuePacket.size());
 
     pthread_cond_signal(&condPacket);
     pthread_mutex_unlock(&mutexPacket);

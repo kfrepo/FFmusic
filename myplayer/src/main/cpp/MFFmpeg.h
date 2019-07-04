@@ -8,6 +8,7 @@
 #include "FFCallJava.h"
 #include "pthread.h"
 #include "FFAudio.h"
+#include "PlayStatus.h"
 
 extern "C"
 {

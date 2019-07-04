@@ -55,7 +55,7 @@ void MFFmpeg::decodeFFmpegThread() {
 
             if(audio == NULL){
 
-                audio = new FFAudio(playstatus);
+                audio = new FFAudio(playstatus, pAVFormatCtx->streams[i]->codecpar->sample_rate);
                 audio->streamIndex = i;
                 audio->codecpar = pAVFormatCtx->streams[i]->codecpar;
             }
@@ -110,8 +110,11 @@ void MFFmpeg::start() {
             return;
         }
     }
-    LOGE("audio start decode!");
+
+
     audio->play();
+
+    LOGI("audio start decode!");
     int count = 0;
     while(playstatus != NULL && !playstatus->exit)
     {
@@ -122,7 +125,7 @@ void MFFmpeg::start() {
             {
                 //解码操作
                 count++;
-                LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
+//                LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
 
                 audio->queue->putAVpacket(avPacket);
             } else{
@@ -130,10 +133,12 @@ void MFFmpeg::start() {
                 av_free(avPacket);
             }
         } else{
+
             av_packet_free(&avPacket);
             av_free(avPacket);
             while(playstatus != NULL && !playstatus->exit)
             {
+
                 if(audio->queue->getQueueSize() > 0)
                 {
                     continue;
@@ -144,6 +149,8 @@ void MFFmpeg::start() {
             }
         }
     }
+
+    LOGE("解码完成");
 //    while(1)
 //    {
 //        //分配一个结构体大小的内存,返回的是一个AVPacket的一个指针
@@ -183,7 +190,7 @@ void MFFmpeg::start() {
 //        packet = NULL;
 //    }
 
-    LOGE("解码完成");
+
 
 }
 

@@ -70,6 +70,7 @@ find_library(
 target_link_libraries( # Specifies the target library.
         native-lib
         log
+        OpenSLES
 
         avcodec-57
         avdevice-57
