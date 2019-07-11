@@ -19,12 +19,15 @@ public:
     jobject jobj;
 
     jmethodID jmid_prepared;
+    jmethodID jmid_load;
 
 public:
     FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job);
     ~FFCallJava();
 
     void onCallPrepared(int type);
+
+    void onCallLoad(int type, bool load);
 };
 
 

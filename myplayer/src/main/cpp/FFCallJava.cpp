@@ -20,15 +20,11 @@ FFCallJava::FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job) {
         return;
     }
 
-    jmid_prepared = jniEnV->GetMethodID(jlz, "onCallPrepared", "()V");
-}
-
-FFCallJava::~FFCallJava() {
-
+    jmid_prepared = env->GetMethodID(jlz, "onCallPrepared", "()V");
+    jmid_load = env->GetMethodID(jlz, "onCallLoad", "(Z)V");
 }
 
 
-//???
 void FFCallJava::onCallPrepared(int type) {
 
     if(type == MAIN_THREAD){
@@ -47,6 +43,22 @@ void FFCallJava::onCallPrepared(int type) {
         }
 
         jniEnv->CallVoidMethod(jobj, jmid_prepared);
+        javaVM->DetachCurrentThread();
+    }
+}
+
+void FFCallJava::onCallLoad(int type, bool load) {
+    if(type == MAIN_THREAD){
+        jniEnV->CallVoidMethod(jobj, jmid_load);
+    }else if(type == CHILD_THREAD){
+
+        JNIEnv *jniEnv;
+        if(javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK){
+
+             LOGE("get child thread jnienv worng");
+            return;
+        }
+        jniEnv->CallVoidMethod(jobj, jmid_load, load);
         javaVM->DetachCurrentThread();
     }
 }

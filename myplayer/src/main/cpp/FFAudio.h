@@ -7,6 +7,7 @@
 
 #include "AVPacketQueue.h"
 #include "PlayStatus.h"
+#include "FFCallJava.h"
 
 extern "C"{
 #include <libavcodec/avcodec.h>
@@ -25,6 +26,7 @@ public:
 
     AVPacketQueue *queue = NULL;
     PlayStatus *playstatus = NULL;
+    FFCallJava *callJava = NULL;
 
     pthread_t thread_play;
     AVPacket *avPacket = NULL;
@@ -49,16 +51,20 @@ public:
 
     //缓冲器队列接口
     SLAndroidSimpleBufferQueueItf pcmBufferQueue = NULL;
+
 public:
-    FFAudio(PlayStatus *playStatus, int sample_rate);
+    FFAudio(PlayStatus *playStatus, int sample_rate, FFCallJava *callJava);
     ~FFAudio();
 
-    void play();
     int resampleAudio();
 
     void initOpenSLES();
 
     int getCurrentSampleRateForOpensles(int sample_rate);
+
+    void play();
+    void pause();
+    void resume();
 };
 
 

@@ -5,7 +5,7 @@
 #include "Listener.h"
 #include "FFCallJava.h"
 #include "MFFmpeg.h"
-
+#include "Playstatus.h"
 extern "C"{
 #include "include/libavformat/avformat.h"
 #include "include/libavcodec/avcodec.h"
@@ -142,7 +142,8 @@ Java_com_wguet_myplayer_Demo_callbackFromC(JNIEnv *env, jobject instance) {
 
 
 /**
- * 1.获取JVM对象
+ * 1.获取JVM对象 JavaVM是虚拟机在JNI中的表示，一个虚拟机中只有一个JavaVM对象，这个对象是线程共享的。JNIEnv类型是一个指向全部JNI方法的指针。该指针只在创建它的线程有效，不能跨线程传递。多线程无法共享。
+ * 这个方法是在加载相应的.so包的时候，系统主动调用的
  * @param vm
  * @param reserved
  * @return
@@ -183,7 +184,7 @@ PlayStatus *playStatus = NULL;
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_wguet_myplayer_player_FFPlayer_n_1prepared(JNIEnv *env, jobject instance, jstring source_) {
+Java_com_wguet_myplayer_player_FFPlayer_jniPrepared(JNIEnv *env, jobject instance, jstring source_) {
 
     const char *source = env->GetStringUTFChars(source_, 0);
     if(mFFmpeg == NULL){
@@ -199,9 +200,30 @@ Java_com_wguet_myplayer_player_FFPlayer_n_1prepared(JNIEnv *env, jobject instanc
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_wguet_myplayer_player_FFPlayer_start(JNIEnv *env, jobject instance) {
+Java_com_wguet_myplayer_player_FFPlayer_jniStart(JNIEnv *env, jobject instance) {
 
     if(mFFmpeg != NULL){
         mFFmpeg->start();
     }
+}
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_wguet_myplayer_player_FFPlayer_jniPause(JNIEnv *env, jobject instance) {
+
+    if(mFFmpeg != NULL){
+        mFFmpeg->pause();
+    }
+
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_wguet_myplayer_player_FFPlayer_jniResume(JNIEnv *env, jobject instance) {
+
+    if(mFFmpeg != NULL){
+        mFFmpeg->resume();
+    }
+
 }

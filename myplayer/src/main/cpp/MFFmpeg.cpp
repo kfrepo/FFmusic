@@ -3,7 +3,7 @@
 //
 
 #include "MFFmpeg.h"
-#include "AndroidLog.h"
+
 
 MFFmpeg::MFFmpeg(PlayStatus *playStatus, FFCallJava *callJava, const char *url) {
     this->playstatus = playStatus;
@@ -55,7 +55,7 @@ void MFFmpeg::decodeFFmpegThread() {
 
             if(audio == NULL){
 
-                audio = new FFAudio(playstatus, pAVFormatCtx->streams[i]->codecpar->sample_rate);
+                audio = new FFAudio(playstatus, pAVFormatCtx->streams[i]->codecpar->sample_rate, callJava);
                 audio->streamIndex = i;
                 audio->codecpar = pAVFormatCtx->streams[i]->codecpar;
             }
@@ -123,22 +123,18 @@ void MFFmpeg::start() {
         {
             if(avPacket->stream_index == audio->streamIndex)
             {
-                //解码操作
-                count++;
 //                LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
-
+                count++;
                 audio->queue->putAVpacket(avPacket);
             } else{
                 av_packet_free(&avPacket);
                 av_free(avPacket);
             }
         } else{
-
             av_packet_free(&avPacket);
             av_free(avPacket);
             while(playstatus != NULL && !playstatus->exit)
             {
-
                 if(audio->queue->getQueueSize() > 0)
                 {
                     continue;
@@ -190,8 +186,18 @@ void MFFmpeg::start() {
 //        packet = NULL;
 //    }
 
+}
 
+void MFFmpeg::pause() {
+    if(audio != NULL){
+        audio->pause();
+    }
+}
 
+void MFFmpeg::resume() {
+    if(audio != NULL){
+        audio->resume();
+    }
 }
 
 /**

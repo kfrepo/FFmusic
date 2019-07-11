@@ -4,10 +4,11 @@
 
 #include "FFAudio.h"
 
-FFAudio::FFAudio(PlayStatus *playStatus, int sample_rate) {
+
+FFAudio::FFAudio(PlayStatus *playStatus, int sample_rate, FFCallJava *callJava) {
 
     this->playstatus = playStatus;
-
+    this->callJava = callJava;
     this->sample_rate = sample_rate;
     queue = new AVPacketQueue(playstatus);
     buffer = (uint8_t *) av_malloc(sample_rate * 2 * 2);
@@ -276,4 +277,16 @@ int FFAudio::getCurrentSampleRateForOpensles(int sample_rate) {
             rate =  SL_SAMPLINGRATE_44_1;
     }
     return rate;
+}
+
+void FFAudio::pause() {
+    if(pcmPlayerPlay != NULL){
+        (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay, SL_PLAYSTATE_PAUSED);
+    }
+}
+
+void FFAudio::resume() {
+    if(pcmPlayerPlay != NULL){
+        (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay,  SL_PLAYSTATE_PLAYING);
+    }
 }
