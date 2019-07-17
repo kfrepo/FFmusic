@@ -187,6 +187,7 @@ JNIEXPORT void JNICALL
 Java_com_wguet_myplayer_player_FFPlayer_jniPrepared(JNIEnv *env, jobject instance, jstring source_) {
 
     const char *source = env->GetStringUTFChars(source_, 0);
+
     if(mFFmpeg == NULL){
         if(callJava == NULL){
             callJava = new FFCallJava(jvm, env, &instance);
@@ -206,7 +207,6 @@ Java_com_wguet_myplayer_player_FFPlayer_jniStart(JNIEnv *env, jobject instance) 
         mFFmpeg->start();
     }
 }
-
 
 extern "C"
 JNIEXPORT void JNICALL

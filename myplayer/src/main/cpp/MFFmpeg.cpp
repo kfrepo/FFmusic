@@ -48,9 +48,12 @@ void MFFmpeg::decodeFFmpegThread() {
         return;
     }
 
-    LOGI("avformat_find_stream_info %d" , pAVFormatCtx->nb_streams);
+    LOGI("avformat_find_stream_info numbers %d" , pAVFormatCtx->nb_streams);
+
     //找出文件中的音频流  nb_streams-视音频流的个数
     for(int i = 0; i < pAVFormatCtx->nb_streams; i++){
+
+        //得到音频流
         if(pAVFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO){
 
             if(audio == NULL){
@@ -58,6 +61,11 @@ void MFFmpeg::decodeFFmpegThread() {
                 audio = new FFAudio(playstatus, pAVFormatCtx->streams[i]->codecpar->sample_rate, callJava);
                 audio->streamIndex = i;
                 audio->codecpar = pAVFormatCtx->streams[i]->codecpar;
+
+                audio->duration = pAVFormatCtx->duration / AV_TIME_BASE;
+                audio->time_base = pAVFormatCtx->streams[i]->time_base;
+
+                LOGI("avformat_find_stream_info i %d, duration:%d, time_base:%d" , i, audio->duration, audio->time_base);
             }
         }
     }
@@ -123,7 +131,7 @@ void MFFmpeg::start() {
         {
             if(avPacket->stream_index == audio->streamIndex)
             {
-//                LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
+                LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
                 count++;
                 audio->queue->putAVpacket(avPacket);
             } else{

@@ -29,13 +29,12 @@ public:
     MFFmpeg(PlayStatus *playStatus, FFCallJava *callJava, const char *url);
     ~MFFmpeg();
 
-    void parpared();
+
     void decodeFFmpegThread();
+
+    void parpared();
     void start();
-
-
     void pause();
-
     void resume();
 };
 

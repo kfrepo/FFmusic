@@ -35,7 +35,7 @@ void FFAudio::play(){
 //FILE *outFile = fopen("/mnt/sdcard/Music/resamplemymusic.pcm", "w");
 int FFAudio::resampleAudio() {
 
-    LOGI("START resampleAudio!");
+    LOGD("START resampleAudio!");
     while (playstatus != NULL && !playstatus->exit)
     {
         avPacket = av_packet_alloc();
@@ -112,7 +112,14 @@ int FFAudio::resampleAudio() {
 
             //data_size 元素的个数
             //fwrite(buffer, 1, data_size, outFile);
-            LOGI("nb is %d, out_channels is %d, data_size is %d", nb, out_channels, data_size);
+            LOGD("nb is %d, out_channels is %d, data_size is %d", nb, out_channels, data_size);
+
+            now_time = avFrame->pts * av_q2d(time_base);
+            LOGD("now_time is %lf", now_time);
+            if(now_time < clock){
+                now_time = clock;
+            }
+            clock = now_time;
 
             av_packet_free(&avPacket);
             av_free(avPacket);
@@ -136,19 +143,27 @@ int FFAudio::resampleAudio() {
         }
     }
     //fclose(outFile);
-    LOGI("Success resampleAudio!");
+    LOGD("Success resampleAudio!");
     return data_size;
 }
 
-void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context)
-{
+void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context) {
+
     FFAudio *ffAudio = (FFAudio *) context;
-    if(ffAudio != NULL)
-    {
+    if(ffAudio != NULL) {
+
         int buffersize = ffAudio->resampleAudio();
-        LOGI("pcmBufferCallBack %d", buffersize);
-        if(buffersize > 0)
-        {
+        LOGD("pcmBufferCallBack buffersize %d", buffersize);
+
+        if(buffersize > 0) {
+
+            ffAudio->clock += buffersize / ((double) (ffAudio->sample_rate * 2 * 2));
+            LOGD("FFAudio pcmBufferCallBack clock is %lf, last_tiem is %lf", ffAudio->clock, ffAudio->last_tiem);
+            if(ffAudio->clock - ffAudio->last_tiem >= 0.1) {
+
+                ffAudio->last_tiem = ffAudio->clock;
+                ffAudio->callJava->onCallTimeInfo(CHILD_THREAD, ffAudio->clock, ffAudio->duration);
+            }
             // 调用BufferQueue的Enqueue方法，把输入数据取到buffer
             (* ffAudio-> pcmBufferQueue)->Enqueue( ffAudio->pcmBufferQueue, (char *) ffAudio-> buffer, buffersize);
         }

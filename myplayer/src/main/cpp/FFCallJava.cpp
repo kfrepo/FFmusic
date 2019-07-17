@@ -22,23 +22,21 @@ FFCallJava::FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job) {
 
     jmid_prepared = env->GetMethodID(jlz, "onCallPrepared", "()V");
     jmid_load = env->GetMethodID(jlz, "onCallLoad", "(Z)V");
+    jmid_timeinfo = env->GetMethodID(jlz, "onCallTimeInfo", "(II)V");
 }
 
 
 void FFCallJava::onCallPrepared(int type) {
 
-    if(type == MAIN_THREAD){
+    if(type == MAIN_THREAD) {
         jniEnV->CallVoidMethod(jobj, jmid_prepared);
-    }
-    else if(type == CHILD_THREAD){
+    } else if(type == CHILD_THREAD) {
 
         JNIEnv *jniEnv;
 
         //绑定当前线程到JavaVM，并获取的JNIEnv
-        if(javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK){
-            if(LOG_DEBUG){
-                LOGE("get child thread jnienv worng");
-            }
+        if(javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK) {
+            LOGE("get child thread jnienv worng");
             return;
         }
 
@@ -48,17 +46,32 @@ void FFCallJava::onCallPrepared(int type) {
 }
 
 void FFCallJava::onCallLoad(int type, bool load) {
-    if(type == MAIN_THREAD){
+    if(type == MAIN_THREAD) {
         jniEnV->CallVoidMethod(jobj, jmid_load);
-    }else if(type == CHILD_THREAD){
+    }else if(type == CHILD_THREAD) {
 
         JNIEnv *jniEnv;
-        if(javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK){
-
-             LOGE("get child thread jnienv worng");
+        if(javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK) {
+            LOGE("get child thread jnienv worng");
             return;
         }
         jniEnv->CallVoidMethod(jobj, jmid_load, load);
+        javaVM->DetachCurrentThread();
+    }
+}
+
+void FFCallJava::onCallTimeInfo(int type, int curr, int total) {
+    if(type == MAIN_THREAD) {
+
+        jniEnV->CallVoidMethod(jobj, jmid_timeinfo, curr, total);
+    }else if(type == CHILD_THREAD) {
+
+        JNIEnv *jniEnv;
+        if(javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK){
+            LOGE("call onCallTimeInfo worng");
+            return;
+        }
+        jniEnv->CallVoidMethod(jobj, jmid_timeinfo, curr, total);
         javaVM->DetachCurrentThread();
     }
 }

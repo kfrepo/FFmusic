@@ -2,9 +2,11 @@ package com.wguet.myplayer.player;
 
 import android.text.TextUtils;
 
+import com.wguet.myplayer.TimeInfoBean;
 import com.wguet.myplayer.listener.FFOnLoadListener;
 import com.wguet.myplayer.listener.FFOnPauseResumeListener;
 import com.wguet.myplayer.listener.FFOnPreparedListener;
+import com.wguet.myplayer.listener.FFOnTimeInfoListener;
 import com.wguet.myplayer.util.LogUtil;
 
 /**
@@ -27,9 +29,12 @@ public class FFPlayer {
 
     private String source;
 
+    private TimeInfoBean timeInfoBean;
+
     private FFOnPreparedListener preparedListener;
     private FFOnLoadListener ffOnLoadListener;
     private FFOnPauseResumeListener ffOnPauseResumeListener;
+    private FFOnTimeInfoListener ffOnTimeInfoListener;
 
     public void setSource(String source){
         this.source= source;
@@ -38,11 +43,17 @@ public class FFPlayer {
     public void setPreparedListener(FFOnPreparedListener listener){
         this.preparedListener = listener;
     }
+
     public void setFfOnLoadListener(FFOnLoadListener listener){
         this.ffOnLoadListener = listener;
     }
+
     public void setFfOnPauseResumeListener(FFOnPauseResumeListener listener){
         this.ffOnPauseResumeListener = listener;
+    }
+
+    public void setFfOnTimeInfoListener(FFOnTimeInfoListener listener){
+        this.ffOnTimeInfoListener = listener;
     }
 
 
@@ -108,9 +119,20 @@ public class FFPlayer {
         }
     }
 
-    public native void jniPrepared(String source);
+    public void onCallTimeInfo(int currentTime, int totalTime){
+        if(ffOnTimeInfoListener != null){
+            if (timeInfoBean == null){
+                timeInfoBean = new TimeInfoBean();
+            }
+            timeInfoBean.setCurrentTime(currentTime);
+            timeInfoBean.setTotalTime(totalTime);
+            ffOnTimeInfoListener.onTimeInfo(timeInfoBean);
+        }
+    }
 
+    public native void jniPrepared(String source);
     public native void jniStart();
     private native void jniPause();
     private native void jniResume();
+
 }
