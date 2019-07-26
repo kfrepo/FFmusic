@@ -15,6 +15,7 @@ import com.wguet.myplayer.util.LogUtil;
 @SuppressWarnings({"ALL", "AlibabaAvoidManuallyCreateThread"})
 public class FFPlayer {
 
+    private static final String TAG = FFPlayer.class.getName();
     static {
         System.loadLibrary("native-lib");
         System.loadLibrary("avcodec-57");
@@ -62,7 +63,7 @@ public class FFPlayer {
             LogUtil.e("source is null!");
             return;
         }
-        onCallLoad(true);
+//        onCallLoad(true);
 
         new Thread(new Runnable() {
             @Override
@@ -100,21 +101,29 @@ public class FFPlayer {
         }
     }
 
-
+    public void stop() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                jniStop();
+            }
+        }).start();
+    }
 
 
     /**
      * c++回调java的方法
      */
     public void onCallPrepared(){
-
         if (preparedListener != null){
+            LogUtil.d(TAG, "JNI 回调 onCallPrepared");
             preparedListener.onPrepared();
         }
     }
 
     public void onCallLoad(boolean load) {
         if(ffOnLoadListener != null) {
+            LogUtil.d(TAG, "JNI 回调 onCallLoad load:" + load);
             ffOnLoadListener.onLoad(load);
         }
     }
@@ -124,15 +133,18 @@ public class FFPlayer {
             if (timeInfoBean == null){
                 timeInfoBean = new TimeInfoBean();
             }
+            LogUtil.d(TAG, "JNI 回调 onCallTimeInfo currentTime:" + currentTime);
             timeInfoBean.setCurrentTime(currentTime);
             timeInfoBean.setTotalTime(totalTime);
             ffOnTimeInfoListener.onTimeInfo(timeInfoBean);
         }
     }
 
-    public native void jniPrepared(String source);
-    public native void jniStart();
+
+    private native void jniPrepared(String source);
+    private native void jniStart();
     private native void jniPause();
     private native void jniResume();
+    private native void jniStop();
 
 }

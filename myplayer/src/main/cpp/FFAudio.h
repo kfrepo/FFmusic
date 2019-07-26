@@ -21,8 +21,8 @@ class FFAudio {
 
 public:
     int streamIndex = -1;
-    AVCodecContext *avCodecContext;//描述编解码器上下文
-    AVCodecParameters *codecpar;// 包含音视频参数的结构体。很重要，可以用来获取音视频参数中的宽度、高度、采样率、编码格式等信息
+    AVCodecContext *avCodecContext = NULL;//描述编解码器上下文
+    AVCodecParameters *codecpar = NULL;// 包含音视频参数的结构体。很重要，可以用来获取音视频参数中的宽度、高度、采样率、编码格式等信息
 
     AVPacketQueue *queue = NULL;
     PlayStatus *playstatus = NULL;
@@ -72,6 +72,8 @@ public:
     void play();
     void pause();
     void resume();
+    void stop();
+    void release();
 };
 
 

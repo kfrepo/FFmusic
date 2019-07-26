@@ -13,6 +13,7 @@
 extern "C"
 {
 #include "libavformat/avformat.h"
+#include <libavutil/time.h>
 };
 
 class MFFmpeg {
@@ -25,10 +26,12 @@ public:
     FFAudio *audio = NULL;
     PlayStatus *playstatus = NULL;
 
+    pthread_mutex_t init_mutex;
+    bool exit = false;
+
 public:
     MFFmpeg(PlayStatus *playStatus, FFCallJava *callJava, const char *url);
     ~MFFmpeg();
-
 
     void decodeFFmpegThread();
 
@@ -36,6 +39,7 @@ public:
     void start();
     void pause();
     void resume();
+    void release();
 };
 
 

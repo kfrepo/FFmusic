@@ -36,11 +36,25 @@ void FFAudio::play(){
 int FFAudio::resampleAudio() {
 
     LOGD("START resampleAudio!");
-    while (playstatus != NULL && !playstatus->exit)
-    {
+    data_size = 0;
+    while (playstatus != NULL && !playstatus->exit){
+
+        if(queue->getQueueSize() == 0){
+            if (!playstatus->load){
+                playstatus->load = true;
+                callJava->onCallLoad(CHILD_THREAD, true);
+            }
+            continue;
+        } else{
+            if (playstatus->load){
+                playstatus->load = false;
+                callJava->onCallLoad(CHILD_THREAD, false);
+            }
+        }
+
         avPacket = av_packet_alloc();
-        if (queue->popAVpacket(avPacket) != 0)
-        {
+        if (queue->popAVpacket(avPacket) != 0){
+
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
@@ -48,8 +62,8 @@ int FFAudio::resampleAudio() {
         }
 
         ret = avcodec_send_packet(avCodecContext, avPacket);
-        if (ret != 0)
-        {
+        if (ret != 0){
+
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
@@ -58,13 +72,12 @@ int FFAudio::resampleAudio() {
 
         avFrame = av_frame_alloc();
         ret = avcodec_receive_frame(avCodecContext, avFrame);
-        if (ret == 0)
-        {
-            if (avFrame->channels && avFrame->channel_layout == 0)
-            {
+        if (ret == 0){
+            if (avFrame->channels && avFrame->channel_layout == 0){
+
                 avFrame->channel_layout = av_get_default_channel_layout(avFrame->channels);
-            } else if (avFrame->channels == 0 && avFrame->channel_layout > 0)
-            {
+            } else if (avFrame->channels == 0 && avFrame->channel_layout > 0){
+
                 avFrame->channels = av_get_channel_layout_nb_channels(avFrame->channel_layout);
             }
 
@@ -81,8 +94,7 @@ int FFAudio::resampleAudio() {
                     NULL, NULL
                     );
 
-            if (!swr_ctx || swr_init(swr_ctx) < 0)
-            {
+            if (!swr_ctx || swr_init(swr_ctx) < 0){
                 av_packet_free(&avPacket);
                 av_free(avPacket);
                 avPacket = NULL;
@@ -102,8 +114,7 @@ int FFAudio::resampleAudio() {
                     &buffer,
                     avFrame->nb_samples,
                     (const uint8_t **) avFrame->data,
-                    avFrame->nb_samples
-                    );
+                    avFrame->nb_samples);
 //            LOGI("swr_convert = %d", nb);
 
             //根据通道的layout返回通道的个数
@@ -303,5 +314,58 @@ void FFAudio::pause() {
 void FFAudio::resume() {
     if(pcmPlayerPlay != NULL){
         (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay,  SL_PLAYSTATE_PLAYING);
+    }
+}
+
+void FFAudio::stop() {
+    if(pcmPlayerPlay != NULL){
+        (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay, SL_PLAYSTATE_STOPPED);
+    }
+}
+
+void FFAudio::release() {
+
+    if (queue != NULL){
+        delete(queue);
+        queue = NULL;
+    }
+
+    if (pcmPlayerObject != NULL) {
+        (*pcmPlayerObject)->Destroy(pcmPlayerObject);
+        pcmPlayerObject = NULL;
+        pcmPlayerPlay = NULL;
+        pcmBufferQueue = NULL;
+    }
+
+
+    if(outputMixObject != NULL) {
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = NULL;
+        outputMixEnvironmentalReverb = NULL;
+    }
+
+    if(engineObject != NULL) {
+        (*engineObject)->Destroy(engineObject);
+        engineObject = NULL;
+        engineEngine = NULL;
+    }
+
+    if(buffer != NULL) {
+        free(buffer);
+        buffer = NULL;
+    }
+
+    if(avCodecContext != NULL) {
+        avcodec_close(avCodecContext);
+        avcodec_free_context(&avCodecContext);
+        avCodecContext = NULL;
+    }
+
+    if(playstatus != NULL) {
+        playstatus = NULL;
+    }
+
+    if(callJava != NULL) {
+        callJava = NULL;
     }
 }

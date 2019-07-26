@@ -25,10 +25,13 @@ FFCallJava::FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job) {
     jmid_timeinfo = env->GetMethodID(jlz, "onCallTimeInfo", "(II)V");
 }
 
+FFCallJava::~FFCallJava() {
+}
 
 void FFCallJava::onCallPrepared(int type) {
 
     if(type == MAIN_THREAD) {
+
         jniEnV->CallVoidMethod(jobj, jmid_prepared);
     } else if(type == CHILD_THREAD) {
 
@@ -46,6 +49,7 @@ void FFCallJava::onCallPrepared(int type) {
 }
 
 void FFCallJava::onCallLoad(int type, bool load) {
+
     if(type == MAIN_THREAD) {
         jniEnV->CallVoidMethod(jobj, jmid_load);
     }else if(type == CHILD_THREAD) {

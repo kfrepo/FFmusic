@@ -9,10 +9,12 @@
 class PlayStatus {
 
 public:
-    bool exit;
+    bool exit = false;
+    bool load = true;
 
 public:
     PlayStatus();
+    ~PlayStatus();
 
 };
 

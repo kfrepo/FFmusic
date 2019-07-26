@@ -33,6 +33,7 @@ public:
 
     int getQueueSize();
 
+    void clearAvpacket();
 };
 
 

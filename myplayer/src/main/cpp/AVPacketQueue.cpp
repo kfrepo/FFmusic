@@ -6,13 +6,14 @@
 
 
 AVPacketQueue::AVPacketQueue(PlayStatus *playStatus) {
+
     this->playStatus = playStatus;
     pthread_mutex_init(&mutexPacket, NULL);
     pthread_cond_init(&condPacket, NULL);
 }
 
 AVPacketQueue::~AVPacketQueue() {
-
+    clearAvpacket();
 }
 
 int AVPacketQueue::putAVpacket(AVPacket *packet) {
@@ -28,6 +29,11 @@ int AVPacketQueue::putAVpacket(AVPacket *packet) {
     return 0;
 }
 
+/**
+ * 从队列里面取出一个音频帧
+ * @param packet
+ * @return
+ */
 int AVPacketQueue::popAVpacket(AVPacket *packet) {
 
     pthread_mutex_lock(&mutexPacket);
@@ -61,4 +67,19 @@ int AVPacketQueue::getQueueSize() {
     pthread_mutex_unlock(&mutexPacket);
 
     return size;
+}
+
+void AVPacketQueue::clearAvpacket() {
+
+    pthread_cond_signal(&condPacket);
+    pthread_mutex_unlock(&mutexPacket);
+
+    while (!queuePacket.empty()){
+        AVPacket *packet = queuePacket.front();
+        queuePacket.pop();
+        av_packet_free(&packet);
+        av_free(packet);
+        packet = NULL;
+    }
+    pthread_mutex_unlock(&mutexPacket);
 }

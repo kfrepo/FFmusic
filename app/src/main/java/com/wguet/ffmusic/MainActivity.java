@@ -21,11 +21,14 @@ import com.wguet.myplayer.util.TimeUtil;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = MainActivity.class.getName();
+
     private FFPlayer ffPlayer;
 
     private Button btStartPlay;
     private Button btPause;
     private Button btResume;
+    private Button btStop;
     private Button btFinish;
     private TextView tvPlayTime;
 
@@ -72,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
         btStartPlay = (Button) findViewById(R.id.bt_start);
         btPause = (Button) findViewById(R.id.bt_pause);
         btResume = (Button) findViewById(R.id.bt_resume);
+        btStop = (Button) findViewById(R.id.bt_stop);
         btFinish= (Button) findViewById(R.id.bt_finish);
         tvPlayTime = (TextView) findViewById(R.id.tv_playtime);
 
@@ -121,7 +125,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 ffPlayer.setSource("/mnt/sdcard/Music/mydream.mp3");
-                ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
+//                ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
+//                ffPlayer.setSource("http://ngcdn004.cnr.cn/live/dszs/index.m3u8");
                 ffPlayer.prepared();
             }
         });
@@ -137,6 +142,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 ffPlayer.resume();
+            }
+        });
+
+        btStop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ffPlayer.stop();
             }
         });
 

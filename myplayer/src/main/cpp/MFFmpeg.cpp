@@ -9,6 +9,21 @@ MFFmpeg::MFFmpeg(PlayStatus *playStatus, FFCallJava *callJava, const char *url) 
     this->playstatus = playStatus;
     this->callJava = callJava;
     this->url = url;
+    exit = false;
+    pthread_mutex_init(&init_mutex, NULL);
+}
+
+MFFmpeg::~MFFmpeg() {
+
+    pthread_mutex_destroy(&init_mutex);
+}
+
+int avformat_callback(void *ctx){
+    MFFmpeg *fmpeg = (MFFmpeg *) ctx;
+    if(fmpeg->playstatus->exit){
+        return AVERROR_EOF;
+    }
+    return 0;
 }
 
 void *decodeFFmpeg(void *data){
@@ -25,10 +40,15 @@ void MFFmpeg::parpared() {
 
 void MFFmpeg::decodeFFmpegThread() {
 
-
+    pthread_mutex_lock(&init_mutex);
     av_register_all();
     avformat_network_init();
     pAVFormatCtx = avformat_alloc_context();
+
+    //超时回调
+    pAVFormatCtx->interrupt_callback.callback = avformat_callback;
+    pAVFormatCtx->interrupt_callback.opaque = this;
+
     LOGI("avformat_open_input %s", url);
     //打开一个文件并解析。可解析的内容包括：视频流、音频流、视频流参数、音频流参数、视频帧索引
     if(avformat_open_input(&pAVFormatCtx, url, NULL, NULL) != 0){
@@ -36,18 +56,20 @@ void MFFmpeg::decodeFFmpegThread() {
         if(LOG_DEBUG){
             LOGE("can not open url :%s", url);
         }
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
         return;
     }
 
 
     //查找格式和索引。有些早期格式它的索引并没有放到头当中，需要你到后面探测，就会用到此函数
     if(avformat_find_stream_info(pAVFormatCtx, NULL) < 0){
-        if(LOG_DEBUG){
-            LOGE("can not find streams from %s", url);
-        }
+
+        LOGE("can not find streams from %s", url);
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
         return;
     }
-
     LOGI("avformat_find_stream_info numbers %d" , pAVFormatCtx->nb_streams);
 
     //找出文件中的音频流  nb_streams-视音频流的个数
@@ -74,9 +96,10 @@ void MFFmpeg::decodeFFmpegThread() {
     AVCodec *dec = avcodec_find_decoder(audio->codecpar->codec_id);// 软解
 //     dec = avcodec_find_decoder_by_name("mp3_mediacodec"); // 硬解
     if(!dec){
-        if(LOG_DEBUG){
-            LOGE("can not find decoder");
-        }
+
+        LOGE("can not find decoder");
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
         return;
     }
 
@@ -88,6 +111,8 @@ void MFFmpeg::decodeFFmpegThread() {
         if(LOG_DEBUG){
             LOGE("can not alloc new decodecctx");
         }
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
         return;
     }
 
@@ -96,36 +121,44 @@ void MFFmpeg::decodeFFmpegThread() {
         if(LOG_DEBUG){
             LOGE("can not fill decodecctx");
         }
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
         return;
     }
 
-    //该函数用于初始化一个视音频编解码器的AVCodecContext,位于libavcodec\avcodec.h
+    //该函数用于初始化一个视音频编解码器的AVCodecContext,位于libavcodec\avcodec.h 打开解码器
     if(avcodec_open2(audio->avCodecContext, dec, 0) != 0){
         if(LOG_DEBUG){
             LOGE("cant not open audio strames");
         }
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
         return;
     }
 
-    callJava->onCallPrepared(CHILD_THREAD);
+    if (callJava != NULL){
+
+        if (playstatus != NULL && !playstatus->exit){
+            callJava->onCallPrepared(CHILD_THREAD);
+        } else{
+            exit = true;
+        }
+    }
+    pthread_mutex_unlock(&init_mutex);
 }
 
 void MFFmpeg::start() {
 
     if(audio == NULL){
-        if(LOG_DEBUG){
-            LOGE("audio is null");
-            return;
-        }
+        LOGE("audio is null");
+        return;
     }
-
 
     audio->play();
 
     LOGI("audio start decode!");
     int count = 0;
-    while(playstatus != NULL && !playstatus->exit)
-    {
+    while(playstatus != NULL && !playstatus->exit){
         AVPacket *avPacket = av_packet_alloc();
         if(av_read_frame(pAVFormatCtx, avPacket) == 0)
         {
@@ -141,18 +174,18 @@ void MFFmpeg::start() {
         } else{
             av_packet_free(&avPacket);
             av_free(avPacket);
-            while(playstatus != NULL && !playstatus->exit)
-            {
-                if(audio->queue->getQueueSize() > 0)
-                {
+            while(playstatus != NULL && !playstatus->exit){
+                if(audio->queue->getQueueSize() > 0){
                     continue;
                 } else{
                     playstatus->exit = true;
                     break;
                 }
             }
+            break;
         }
     }
+    exit = true;
 
     LOGE("解码完成");
 //    while(1)
@@ -206,6 +239,55 @@ void MFFmpeg::resume() {
     if(audio != NULL){
         audio->resume();
     }
+}
+
+void MFFmpeg::release() {
+    LOGE("开始释放Ffmpeg");
+
+    if (playstatus->exit){
+        return;
+    }
+    playstatus->exit = true;
+
+    pthread_mutex_unlock(&init_mutex);
+    int sleepCount = 1000;
+
+    while(!exit){
+
+        if (sleepCount > 1000){
+            exit = true;
+        }
+
+        LOGE("wait ffmpeg  exit %d", sleepCount);
+        sleepCount++;
+        //暂停10毫秒
+        av_usleep(1000 * 10);
+    }
+
+    LOGE("释放Audio");
+    if(audio != NULL){
+        audio->release();
+        delete(audio);
+        audio = NULL;
+    }
+
+    LOGE("释放 封装格式上下文");
+    if(pAVFormatCtx != NULL){
+        avformat_close_input(&pAVFormatCtx);
+        avformat_free_context(pAVFormatCtx);
+        pAVFormatCtx = NULL;
+    }
+
+    LOGE("释放callJava");
+    if (callJava != NULL){
+        callJava = NULL;
+    }
+
+    LOGE("释放 playstatus");
+    if(playstatus != NULL){
+        playstatus = NULL;
+    }
+    pthread_mutex_unlock(&init_mutex);
 }
 
 /**
