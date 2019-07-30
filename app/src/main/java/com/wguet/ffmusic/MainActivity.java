@@ -8,8 +8,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.wguet.myplayer.TimeInfoBean;
+import com.wguet.myplayer.listener.FFOnErrorListener;
 import com.wguet.myplayer.listener.FFOnLoadListener;
 import com.wguet.myplayer.listener.FFOnPauseResumeListener;
 import com.wguet.myplayer.listener.FFOnPreparedListener;
@@ -121,11 +123,25 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ffPlayer.setFfOnErrorListener(new FFOnErrorListener() {
+            @Override
+            public void onError(int code, final String msg) {
+                LogUtil.e("code:" + code + " msg:" +msg);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                    }
+                });
+
+            }
+        });
+
         btStartPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 ffPlayer.setSource("/mnt/sdcard/Music/mydream.mp3");
-//                ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
+                ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
 //                ffPlayer.setSource("http://ngcdn004.cnr.cn/live/dszs/index.m3u8");
                 ffPlayer.prepared();
             }
@@ -164,6 +180,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message message){
             super.handleMessage(message);
+
             switch (message.what){
                 case 1:{
                     TimeInfoBean time = (TimeInfoBean) message.obj;

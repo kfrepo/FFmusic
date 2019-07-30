@@ -53,9 +53,9 @@ void MFFmpeg::decodeFFmpegThread() {
     //打开一个文件并解析。可解析的内容包括：视频流、音频流、视频流参数、音频流参数、视频帧索引
     if(avformat_open_input(&pAVFormatCtx, url, NULL, NULL) != 0){
 
-        if(LOG_DEBUG){
-            LOGE("can not open url :%s", url);
-        }
+        LOGE("can not open url :%s", url);
+        callJava->onCallError(CHILD_THREAD, 1001, "can not open url");
+
         exit = true;
         pthread_mutex_unlock(&init_mutex);
         return;
@@ -66,6 +66,7 @@ void MFFmpeg::decodeFFmpegThread() {
     if(avformat_find_stream_info(pAVFormatCtx, NULL) < 0){
 
         LOGE("can not find streams from %s", url);
+        callJava->onCallError(CHILD_THREAD, 1002,"can not find streams from url");
         exit = true;
         pthread_mutex_unlock(&init_mutex);
         return;
@@ -98,6 +99,7 @@ void MFFmpeg::decodeFFmpegThread() {
     if(!dec){
 
         LOGE("can not find decoder");
+        callJava->onCallError(CHILD_THREAD, 1003, "can not find decoder");
         exit = true;
         pthread_mutex_unlock(&init_mutex);
         return;
@@ -108,9 +110,9 @@ void MFFmpeg::decodeFFmpegThread() {
     ///配置解码器
     audio->avCodecContext = avcodec_alloc_context3(dec);
     if(!audio->avCodecContext){
-        if(LOG_DEBUG){
-            LOGE("can not alloc new decodecctx");
-        }
+
+        LOGE("can not alloc new decodecctx");
+        callJava->onCallError(CHILD_THREAD, 1004, "can not alloc new decodecctx");
         exit = true;
         pthread_mutex_unlock(&init_mutex);
         return;
@@ -118,9 +120,8 @@ void MFFmpeg::decodeFFmpegThread() {
 
     //将音频流信息拷贝到新的AVCodecContext结构体中 avCodecContext = codecpar
     if(avcodec_parameters_to_context(audio->avCodecContext, audio->codecpar) < 0){
-        if(LOG_DEBUG){
-            LOGE("can not fill decodecctx");
-        }
+        LOGE("can not fill decodecctx");
+        callJava->onCallError(CHILD_THREAD, 1005, "can not fill decodecctx");
         exit = true;
         pthread_mutex_unlock(&init_mutex);
         return;
@@ -128,9 +129,9 @@ void MFFmpeg::decodeFFmpegThread() {
 
     //该函数用于初始化一个视音频编解码器的AVCodecContext,位于libavcodec\avcodec.h 打开解码器
     if(avcodec_open2(audio->avCodecContext, dec, 0) != 0){
-        if(LOG_DEBUG){
-            LOGE("cant not open audio strames");
-        }
+
+        LOGE("cant not open audio strames");
+        callJava->onCallError(CHILD_THREAD, 1006, "cant not open audio strames");
         exit = true;
         pthread_mutex_unlock(&init_mutex);
         return;

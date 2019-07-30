@@ -181,6 +181,7 @@ FFCallJava *callJava = NULL;
 MFFmpeg *mFFmpeg = NULL;
 
 PlayStatus *playStatus = NULL;
+bool nexit = true;
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -232,6 +233,10 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_wguet_myplayer_player_FFPlayer_jniStop(JNIEnv *env, jobject instance) {
 
+    if (!nexit){
+        return;
+    }
+    nexit = false;
     if (mFFmpeg) {
 
         mFFmpeg->release();
@@ -248,4 +253,5 @@ Java_com_wguet_myplayer_player_FFPlayer_jniStop(JNIEnv *env, jobject instance) {
             playStatus = NULL;
         }
     }
+    nexit = true;
 }

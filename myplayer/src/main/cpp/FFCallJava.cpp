@@ -23,6 +23,7 @@ FFCallJava::FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job) {
     jmid_prepared = env->GetMethodID(jlz, "onCallPrepared", "()V");
     jmid_load = env->GetMethodID(jlz, "onCallLoad", "(Z)V");
     jmid_timeinfo = env->GetMethodID(jlz, "onCallTimeInfo", "(II)V");
+    jmid_error = env->GetMethodID(jlz, "onCallError", "(ILjava/lang/String;)V");
 }
 
 FFCallJava::~FFCallJava() {
@@ -76,6 +77,28 @@ void FFCallJava::onCallTimeInfo(int type, int curr, int total) {
             return;
         }
         jniEnv->CallVoidMethod(jobj, jmid_timeinfo, curr, total);
+        javaVM->DetachCurrentThread();
+    }
+}
+
+void FFCallJava::onCallError(int type, int code, char *msg) {
+
+    if(type == MAIN_THREAD){
+
+        jstring jmsg = jniEnV->NewStringUTF(msg);
+        jniEnV->CallVoidMethod(jobj, jmid_error, code, jmsg);
+        jniEnV->DeleteLocalRef(jmsg);
+    } else if(type == CHILD_THREAD){
+
+        JNIEnv *jniEnv;
+        if(javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK){
+            LOGE("call onCallError worng");
+            return;
+        }
+
+        jstring jmsg = jniEnv->NewStringUTF(msg);
+        jniEnv->CallVoidMethod(jobj, jmid_error, code, jmsg);
+        jniEnv->DeleteLocalRef(jmsg);
         javaVM->DetachCurrentThread();
     }
 }

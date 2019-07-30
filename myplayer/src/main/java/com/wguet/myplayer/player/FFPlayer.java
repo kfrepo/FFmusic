@@ -3,6 +3,7 @@ package com.wguet.myplayer.player;
 import android.text.TextUtils;
 
 import com.wguet.myplayer.TimeInfoBean;
+import com.wguet.myplayer.listener.FFOnErrorListener;
 import com.wguet.myplayer.listener.FFOnLoadListener;
 import com.wguet.myplayer.listener.FFOnPauseResumeListener;
 import com.wguet.myplayer.listener.FFOnPreparedListener;
@@ -36,6 +37,7 @@ public class FFPlayer {
     private FFOnLoadListener ffOnLoadListener;
     private FFOnPauseResumeListener ffOnPauseResumeListener;
     private FFOnTimeInfoListener ffOnTimeInfoListener;
+    private FFOnErrorListener ffOnErrorListener;
 
     public void setSource(String source){
         this.source= source;
@@ -55,6 +57,10 @@ public class FFPlayer {
 
     public void setFfOnTimeInfoListener(FFOnTimeInfoListener listener){
         this.ffOnTimeInfoListener = listener;
+    }
+
+    public void setFfOnErrorListener(FFOnErrorListener listener){
+        this.ffOnErrorListener = listener;
     }
 
 
@@ -140,6 +146,12 @@ public class FFPlayer {
         }
     }
 
+    public void onCallError(int code, String msg) {
+        if(ffOnErrorListener != null) {
+            stop();
+            ffOnErrorListener.onError(code, msg);
+        }
+    }
 
     private native void jniPrepared(String source);
     private native void jniStart();
