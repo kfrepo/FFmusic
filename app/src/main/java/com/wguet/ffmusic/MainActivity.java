@@ -11,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.wguet.myplayer.TimeInfoBean;
+import com.wguet.myplayer.listener.FFOnCompleteListener;
 import com.wguet.myplayer.listener.FFOnErrorListener;
 import com.wguet.myplayer.listener.FFOnLoadListener;
 import com.wguet.myplayer.listener.FFOnPauseResumeListener;
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btPause;
     private Button btResume;
     private Button btStop;
+    private Button btSeek;
     private Button btFinish;
     private TextView tvPlayTime;
 
@@ -78,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
         btPause = (Button) findViewById(R.id.bt_pause);
         btResume = (Button) findViewById(R.id.bt_resume);
         btStop = (Button) findViewById(R.id.bt_stop);
+        btSeek = (Button) findViewById(R.id.bt_seek);
         btFinish= (Button) findViewById(R.id.bt_finish);
         tvPlayTime = (TextView) findViewById(R.id.tv_playtime);
 
@@ -133,7 +136,19 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
                     }
                 });
+            }
+        });
 
+        ffPlayer.setFfOnCompleteListener(new FFOnCompleteListener() {
+            @Override
+            public void onComplete() {
+                LogUtil.d("播放结束!");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvPlayTime.setText("00/00");
+                    }
+                });
             }
         });
 
@@ -165,6 +180,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 ffPlayer.stop();
+            }
+        });
+
+        btSeek.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ffPlayer.seek(215);
             }
         });
 

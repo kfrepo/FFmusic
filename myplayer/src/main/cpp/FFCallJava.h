@@ -5,8 +5,9 @@
 #ifndef FFMUSIC_FFCALLJAVA_H
 #define FFMUSIC_FFCALLJAVA_H
 
-#include <linux/stddef.h>
 #include "jni.h"
+#include <linux/stddef.h>
+
 #include "AndroidLog.h"
 
 #define MAIN_THREAD 0
@@ -14,14 +15,15 @@
 
 class FFCallJava {
 public:
-    _JavaVM *javaVM;
-    JNIEnv *jniEnV;
+    _JavaVM *javaVM = NULL;
+    JNIEnv *jniEnv = NULL;
     jobject jobj;
 
     jmethodID jmid_prepared;
     jmethodID jmid_load;
     jmethodID jmid_timeinfo;
     jmethodID jmid_error;
+    jmethodID jmid_complete;
 
 public:
     FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job);
@@ -34,6 +36,8 @@ public:
     void onCallTimeInfo(int type, int curr, int total);
 
     void onCallError(int type, int code, char *msg);
+
+    void onCallComplete(int type);
 };
 
 

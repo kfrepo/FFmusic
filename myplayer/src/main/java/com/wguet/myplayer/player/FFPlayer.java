@@ -3,6 +3,7 @@ package com.wguet.myplayer.player;
 import android.text.TextUtils;
 
 import com.wguet.myplayer.TimeInfoBean;
+import com.wguet.myplayer.listener.FFOnCompleteListener;
 import com.wguet.myplayer.listener.FFOnErrorListener;
 import com.wguet.myplayer.listener.FFOnLoadListener;
 import com.wguet.myplayer.listener.FFOnPauseResumeListener;
@@ -38,6 +39,7 @@ public class FFPlayer {
     private FFOnPauseResumeListener ffOnPauseResumeListener;
     private FFOnTimeInfoListener ffOnTimeInfoListener;
     private FFOnErrorListener ffOnErrorListener;
+    private FFOnCompleteListener ffOnCompleteListener;
 
     public void setSource(String source){
         this.source= source;
@@ -61,6 +63,10 @@ public class FFPlayer {
 
     public void setFfOnErrorListener(FFOnErrorListener listener){
         this.ffOnErrorListener = listener;
+    }
+
+    public void setFfOnCompleteListener(FFOnCompleteListener listener){
+        this.ffOnCompleteListener = listener;
     }
 
 
@@ -108,12 +114,17 @@ public class FFPlayer {
     }
 
     public void stop() {
+        timeInfoBean = null;
         new Thread(new Runnable() {
             @Override
             public void run() {
                 jniStop();
             }
         }).start();
+    }
+
+    public void seek(int seconds){
+        jniSeek(seconds);
     }
 
 
@@ -153,10 +164,18 @@ public class FFPlayer {
         }
     }
 
+    public void onCallComplete(){
+        if (ffOnCompleteListener != null){
+            stop();
+            ffOnCompleteListener.onComplete();
+        }
+    }
+
     private native void jniPrepared(String source);
     private native void jniStart();
     private native void jniPause();
     private native void jniResume();
     private native void jniStop();
+    private native void jniSeek(int seconds);
 
 }

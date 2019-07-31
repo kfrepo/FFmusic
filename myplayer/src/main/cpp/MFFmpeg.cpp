@@ -11,11 +11,13 @@ MFFmpeg::MFFmpeg(PlayStatus *playStatus, FFCallJava *callJava, const char *url) 
     this->url = url;
     exit = false;
     pthread_mutex_init(&init_mutex, NULL);
+    pthread_mutex_init(&seek_mutex, NULL);
 }
 
 MFFmpeg::~MFFmpeg() {
 
     pthread_mutex_destroy(&init_mutex);
+    pthread_mutex_destroy(&seek_mutex);
 }
 
 int avformat_callback(void *ctx){
@@ -87,8 +89,10 @@ void MFFmpeg::decodeFFmpegThread() {
 
                 audio->duration = pAVFormatCtx->duration / AV_TIME_BASE;
                 audio->time_base = pAVFormatCtx->streams[i]->time_base;
+                duration = audio->duration;
 
-                LOGI("avformat_find_stream_info i %d, duration:%d, time_base:%d" , i, audio->duration, audio->time_base);
+                //av_q2d(time_base)=每个刻度是多少秒
+                LOGI("avformat_find_stream_info i %d, audio duration:%d, audio time_base den:%d, sample_rate:%d" , i, audio->duration, audio->time_base.den, pAVFormatCtx->streams[i]->codecpar->sample_rate);
             }
         }
     }
@@ -151,7 +155,7 @@ void MFFmpeg::decodeFFmpegThread() {
 void MFFmpeg::start() {
 
     if(audio == NULL){
-        LOGE("audio is null");
+        LOGE("audio is null!");
         return;
     }
 
@@ -160,11 +164,19 @@ void MFFmpeg::start() {
     LOGI("audio start decode!");
     int count = 0;
     while(playstatus != NULL && !playstatus->exit){
+
+        if (playstatus->seek){
+            continue;
+        }
+        if (audio->queue->getQueueSize() > 40){
+            continue;
+        }
+
         AVPacket *avPacket = av_packet_alloc();
-        if(av_read_frame(pAVFormatCtx, avPacket) == 0)
-        {
-            if(avPacket->stream_index == audio->streamIndex)
-            {
+        if(av_read_frame(pAVFormatCtx, avPacket) == 0){
+
+            if(avPacket->stream_index == audio->streamIndex){
+
                 LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
                 count++;
                 audio->queue->putAVpacket(avPacket);
@@ -186,8 +198,11 @@ void MFFmpeg::start() {
             break;
         }
     }
-    exit = true;
 
+    if (callJava != NULL){
+        callJava->onCallComplete(CHILD_THREAD);
+    }
+    exit = true;
     LOGE("解码完成");
 //    while(1)
 //    {
@@ -243,15 +258,15 @@ void MFFmpeg::resume() {
 }
 
 void MFFmpeg::release() {
-    LOGE("开始释放Ffmpeg");
 
+    LOGE("开始释放Ffmpeg");
     if (playstatus->exit){
         return;
     }
     playstatus->exit = true;
 
-    pthread_mutex_unlock(&init_mutex);
-    int sleepCount = 1000;
+    pthread_mutex_lock(&init_mutex);
+    int sleepCount = 0;
 
     while(!exit){
 
@@ -289,6 +304,31 @@ void MFFmpeg::release() {
         playstatus = NULL;
     }
     pthread_mutex_unlock(&init_mutex);
+}
+
+void MFFmpeg::seek(int64_t seconds) {
+
+    if (duration <= 0){
+        return;
+    }
+    if (seconds >= 0 && seconds <= duration){
+        if (audio != NULL){
+            playstatus->seek = true;
+            audio->queue->clearAvpacket();
+            audio->clock = 0;
+            audio->last_tiem = 0;
+            pthread_mutex_lock(&seek_mutex);
+            int64_t rel = seconds * AV_TIME_BASE;
+
+            //时间基转换公式
+            //timestamp(ffmpeg内部时间戳) = AV_TIME_BASE * time(秒)
+            //time(秒) = AV_TIME_BASE_Q * timestamp(ffmpeg内部时间戳)
+            //要seek的时间点，以time_base或者AV_TIME_BASE为单位
+            avformat_seek_file(pAVFormatCtx, -1, INT64_MIN, rel, INT64_MAX, 0);
+            pthread_mutex_unlock(&seek_mutex);
+            playstatus->seek = false;
+        }
+    }
 }
 
 /**

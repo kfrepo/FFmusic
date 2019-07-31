@@ -8,11 +8,11 @@
 FFCallJava::FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job) {
 
     this->javaVM = javaVM;
-    this->jniEnV = env;
+    this->jniEnv = env;
     this->jobj = *job;
-    this->jobj = jniEnV->NewGlobalRef(jobj);// 全局引用,这种对象如不主动释放,它永远都不会被垃圾回收
+    this->jobj = jniEnv->NewGlobalRef(jobj);// 全局引用,这种对象如不主动释放,它永远都不会被垃圾回收
 
-    jclass  jlz = jniEnV->GetObjectClass(jobj);//通过对象获取这个类
+    jclass  jlz = jniEnv->GetObjectClass(jobj);//通过对象获取这个类
     if(!jlz){
         if(LOG_DEBUG){
             LOGE("get jclass wrong");
@@ -24,6 +24,7 @@ FFCallJava::FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job) {
     jmid_load = env->GetMethodID(jlz, "onCallLoad", "(Z)V");
     jmid_timeinfo = env->GetMethodID(jlz, "onCallTimeInfo", "(II)V");
     jmid_error = env->GetMethodID(jlz, "onCallError", "(ILjava/lang/String;)V");
+    jmid_complete = env->GetMethodID(jlz, "onCallComplete", "()V");
 }
 
 FFCallJava::~FFCallJava() {
@@ -33,7 +34,7 @@ void FFCallJava::onCallPrepared(int type) {
 
     if(type == MAIN_THREAD) {
 
-        jniEnV->CallVoidMethod(jobj, jmid_prepared);
+        jniEnv->CallVoidMethod(jobj, jmid_prepared);
     } else if(type == CHILD_THREAD) {
 
         JNIEnv *jniEnv;
@@ -52,7 +53,7 @@ void FFCallJava::onCallPrepared(int type) {
 void FFCallJava::onCallLoad(int type, bool load) {
 
     if(type == MAIN_THREAD) {
-        jniEnV->CallVoidMethod(jobj, jmid_load);
+        jniEnv->CallVoidMethod(jobj, jmid_load);
     }else if(type == CHILD_THREAD) {
 
         JNIEnv *jniEnv;
@@ -68,7 +69,7 @@ void FFCallJava::onCallLoad(int type, bool load) {
 void FFCallJava::onCallTimeInfo(int type, int curr, int total) {
     if(type == MAIN_THREAD) {
 
-        jniEnV->CallVoidMethod(jobj, jmid_timeinfo, curr, total);
+        jniEnv->CallVoidMethod(jobj, jmid_timeinfo, curr, total);
     }else if(type == CHILD_THREAD) {
 
         JNIEnv *jniEnv;
@@ -85,9 +86,9 @@ void FFCallJava::onCallError(int type, int code, char *msg) {
 
     if(type == MAIN_THREAD){
 
-        jstring jmsg = jniEnV->NewStringUTF(msg);
-        jniEnV->CallVoidMethod(jobj, jmid_error, code, jmsg);
-        jniEnV->DeleteLocalRef(jmsg);
+        jstring jmsg = jniEnv->NewStringUTF(msg);
+        jniEnv->CallVoidMethod(jobj, jmid_error, code, jmsg);
+        jniEnv->DeleteLocalRef(jmsg);
     } else if(type == CHILD_THREAD){
 
         JNIEnv *jniEnv;
@@ -99,6 +100,23 @@ void FFCallJava::onCallError(int type, int code, char *msg) {
         jstring jmsg = jniEnv->NewStringUTF(msg);
         jniEnv->CallVoidMethod(jobj, jmid_error, code, jmsg);
         jniEnv->DeleteLocalRef(jmsg);
+        javaVM->DetachCurrentThread();
+    }
+}
+
+void FFCallJava::onCallComplete(int type) {
+
+    if(type == MAIN_THREAD){
+
+        jniEnv->CallVoidMethod(jobj, jmid_complete);
+    } else if(type == CHILD_THREAD){
+
+        JNIEnv *jniEnv;
+        if(javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK){
+            LOGE("call onCallComplete worng");
+            return;
+        }
+        jniEnv->CallVoidMethod(jobj, jmid_complete);
         javaVM->DetachCurrentThread();
     }
 }

@@ -182,6 +182,7 @@ MFFmpeg *mFFmpeg = NULL;
 
 PlayStatus *playStatus = NULL;
 bool nexit = true;
+pthread_t thread_start;
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -201,12 +202,18 @@ Java_com_wguet_myplayer_player_FFPlayer_jniPrepared(JNIEnv *env, jobject instanc
     env->ReleaseStringUTFChars(source_, source);
 }
 
+void *startCallBack(void *data){
+    MFFmpeg *ffmpeg = (MFFmpeg *) data;
+    ffmpeg->start();
+    pthread_exit(&thread_start);
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_wguet_myplayer_player_FFPlayer_jniStart(JNIEnv *env, jobject instance) {
 
     if(mFFmpeg != NULL){
-        mFFmpeg->start();
+        pthread_create(&thread_start, NULL, startCallBack, mFFmpeg);
     }
 }
 
@@ -254,4 +261,13 @@ Java_com_wguet_myplayer_player_FFPlayer_jniStop(JNIEnv *env, jobject instance) {
         }
     }
     nexit = true;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_wguet_myplayer_player_FFPlayer_jniSeek(JNIEnv *env, jobject instance, jint seconds){
+
+    if (mFFmpeg != NULL){
+        mFFmpeg->seek(seconds);
+    }
 }

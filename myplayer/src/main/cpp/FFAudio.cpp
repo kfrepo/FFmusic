@@ -39,6 +39,10 @@ int FFAudio::resampleAudio() {
     data_size = 0;
     while (playstatus != NULL && !playstatus->exit){
 
+        if (playstatus->seek){
+            continue;
+        }
+
         if(queue->getQueueSize() == 0){
             if (!playstatus->load){
                 playstatus->load = true;
@@ -126,7 +130,7 @@ int FFAudio::resampleAudio() {
             LOGD("nb is %d, out_channels is %d, data_size is %d", nb, out_channels, data_size);
 
             now_time = avFrame->pts * av_q2d(time_base);
-            LOGD("now_time is %lf", now_time);
+            LOGD("now_time:%lf, time_base:%d/%d, pts:%lld", now_time, time_base.num, time_base.den, avFrame->pts);
             if(now_time < clock){
                 now_time = clock;
             }
@@ -168,6 +172,7 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context) {
 
         if(buffersize > 0) {
 
+            //假设某通道的音频信号是采样率为8kHz，位宽为16bit，20ms一帧，双通道，则一帧音频数据的大小为： int size = 8000 x 16bit x 0.02s x 2 = 5120 bit = 640 byte
             ffAudio->clock += buffersize / ((double) (ffAudio->sample_rate * 2 * 2));
             LOGD("FFAudio pcmBufferCallBack clock is %lf, last_tiem is %lf", ffAudio->clock, ffAudio->last_tiem);
             if(ffAudio->clock - ffAudio->last_tiem >= 0.1) {
