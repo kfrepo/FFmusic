@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btStop;
     private Button btSeek;
     private Button btFinish;
+    private Button btNext;
     private TextView tvPlayTime;
 
     @Override
@@ -83,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
         btSeek = (Button) findViewById(R.id.bt_seek);
         btFinish= (Button) findViewById(R.id.bt_finish);
         tvPlayTime = (TextView) findViewById(R.id.tv_playtime);
+        btNext = (Button) findViewById(R.id.bt_next);
 
         ffPlayer = new FFPlayer();
         ffPlayer.setPreparedListener(new FFOnPreparedListener() {
@@ -146,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        tvPlayTime.setText("00/00");
+                        tvPlayTime.setText("00/00 播放结束");
                     }
                 });
             }
@@ -186,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
         btSeek.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ffPlayer.seek(215);
+                ffPlayer.seek(190);
             }
         });
 
@@ -194,6 +196,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 android.os.Process.killProcess(android.os.Process.myPid());
+            }
+        });
+
+        btNext.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                ffPlayer.playNext("http://ngcdn004.cnr.cn/live/dszs/index.m3u8");
             }
         });
     }

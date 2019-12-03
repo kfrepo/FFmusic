@@ -14,6 +14,8 @@ AVPacketQueue::AVPacketQueue(PlayStatus *playStatus) {
 
 AVPacketQueue::~AVPacketQueue() {
     clearAvpacket();
+    pthread_mutex_destroy(&mutexPacket);
+    pthread_cond_destroy(&condPacket);
 }
 
 int AVPacketQueue::putAVpacket(AVPacket *packet) {
@@ -72,7 +74,7 @@ int AVPacketQueue::getQueueSize() {
 void AVPacketQueue::clearAvpacket() {
 
     pthread_cond_signal(&condPacket);
-    pthread_mutex_unlock(&mutexPacket);
+    pthread_mutex_lock(&mutexPacket);
 
     while (!queuePacket.empty()){
         AVPacket *packet = queuePacket.front();

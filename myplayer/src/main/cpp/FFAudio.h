@@ -31,7 +31,7 @@ public:
     pthread_t thread_play;
     AVPacket *avPacket = NULL;
     AVFrame *avFrame = NULL;
-    int ret = 0;
+    int ret = -1;
     uint8_t  *buffer = NULL;
     int data_size = 0;
 
@@ -39,9 +39,9 @@ public:
 
     int duration = 0;
     AVRational time_base;
-    double clock;//总的播放时长
-    double now_time;//当前frame时间
-    double last_tiem; //上一次调用时间
+    double clock = 0;//总的播放时长
+    double now_time = 0;//当前frame时间
+    double last_tiem = 0; //上一次调用时间
 
     //引擎接口
     SLObjectItf engineObject = NULL;

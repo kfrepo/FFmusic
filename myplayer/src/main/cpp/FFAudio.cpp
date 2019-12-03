@@ -77,7 +77,7 @@ int FFAudio::resampleAudio() {
         avFrame = av_frame_alloc();
         ret = avcodec_receive_frame(avCodecContext, avFrame);
         if (ret == 0){
-            if (avFrame->channels && avFrame->channel_layout == 0){
+            if (avFrame->channels > 0 && avFrame->channel_layout == 0){
 
                 avFrame->channel_layout = av_get_default_channel_layout(avFrame->channels);
             } else if (avFrame->channels == 0 && avFrame->channel_layout > 0){
@@ -85,7 +85,7 @@ int FFAudio::resampleAudio() {
                 avFrame->channels = av_get_channel_layout_nb_channels(avFrame->channel_layout);
             }
 
-            SwrContext *swr_ctx;
+            SwrContext *swr_ctx = NULL;
             //根据通道布局、音频数据格式、采样频率，返回分配的转换上下文
             swr_ctx = swr_alloc_set_opts(
                     NULL,
@@ -93,10 +93,9 @@ int FFAudio::resampleAudio() {
                     AV_SAMPLE_FMT_S16,
                     avFrame->sample_rate,
                     avFrame->channel_layout,
-                    (AVSampleFormat) avFrame->format,
+                    static_cast<AVSampleFormat> (avFrame->format),
                     avFrame->sample_rate,
-                    NULL, NULL
-                    );
+                    NULL, NULL);
 
             if (!swr_ctx || swr_init(swr_ctx) < 0){
                 av_packet_free(&avPacket);
@@ -145,6 +144,7 @@ int FFAudio::resampleAudio() {
             avFrame = NULL;
 
             swr_free(&swr_ctx);
+            swr_ctx = NULL;
             break;
         } else{
             av_packet_free(&avPacket);

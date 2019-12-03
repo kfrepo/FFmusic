@@ -31,7 +31,7 @@ public class FFPlayer {
     }
 
     private String source;
-
+    private boolean playNext;
     private TimeInfoBean timeInfoBean;
 
     private FFOnPreparedListener preparedListener;
@@ -127,6 +127,11 @@ public class FFPlayer {
         jniSeek(seconds);
     }
 
+    public void playNext(String url) {
+        source = url;
+        playNext = true;
+        stop();
+    }
 
     /**
      * c++回调java的方法
@@ -168,6 +173,13 @@ public class FFPlayer {
         if (ffOnCompleteListener != null){
             stop();
             ffOnCompleteListener.onComplete();
+        }
+    }
+
+    public void onCallNext() {
+        if(playNext) {
+            playNext = false;
+            prepared();
         }
     }
 

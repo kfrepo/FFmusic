@@ -156,6 +156,7 @@ void MFFmpeg::start() {
 
     if(audio == NULL){
         LOGE("audio is null!");
+        callJava->onCallError(CHILD_THREAD, 1006, "audio is null!");
         return;
     }
 
@@ -173,7 +174,14 @@ void MFFmpeg::start() {
         }
 
         AVPacket *avPacket = av_packet_alloc();
-        if(av_read_frame(pAVFormatCtx, avPacket) == 0){
+        pthread_mutex_lock(&seek_mutex);
+        int ret = av_read_frame(pAVFormatCtx, avPacket);
+        pthread_mutex_unlock(&seek_mutex);
+
+        if (ret==0){
+
+//        }
+//        if(av_read_frame(pAVFormatCtx, avPacket) == 0){
 
             if(avPacket->stream_index == audio->streamIndex){
 
@@ -183,10 +191,12 @@ void MFFmpeg::start() {
             } else{
                 av_packet_free(&avPacket);
                 av_free(avPacket);
+                avPacket = NULL;
             }
         } else{
             av_packet_free(&avPacket);
             av_free(avPacket);
+            avPacket = NULL;
             while(playstatus != NULL && !playstatus->exit){
                 if(audio->queue->getQueueSize() > 0){
                     continue;
