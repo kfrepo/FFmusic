@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/FFMusic.iml" filepath="$PROJECT_DIR$/FFMusic.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/myplayer/myplayer.iml" filepath="$PROJECT_DIR$/myplayer/myplayer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FFmusic.iml" filepath="$PROJECT_DIR$/.idea/modules/FFmusic.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/FFmusic.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/FFmusic.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/myplayer/FFmusic.myplayer.iml" filepath="$PROJECT_DIR$/.idea/modules/myplayer/FFmusic.myplayer.iml" />
     </modules>
   </component>
 </project>

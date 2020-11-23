@@ -199,7 +199,7 @@ Java_com_wguet_myplayer_player_FFPlayer_jniPrepared(JNIEnv *env, jobject instanc
         mFFmpeg = new MFFmpeg(playStatus, callJava, source);
         mFFmpeg->parpared();
     }
-    env->ReleaseStringUTFChars(source_, source);
+//    env->ReleaseStringUTFChars(source_, source);
 }
 
 void *startCallBack(void *data){

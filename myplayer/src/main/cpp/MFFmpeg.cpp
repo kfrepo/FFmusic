@@ -51,9 +51,11 @@ void MFFmpeg::decodeFFmpegThread() {
     pAVFormatCtx->interrupt_callback.callback = avformat_callback;
     pAVFormatCtx->interrupt_callback.opaque = this;
 
-    LOGI("avformat_open_input %s", url);
+
     //打开一个文件并解析。可解析的内容包括：视频流、音频流、视频流参数、音频流参数、视频帧索引
-    if(avformat_open_input(&pAVFormatCtx, url, NULL, NULL) != 0){
+    int res = avformat_open_input(&pAVFormatCtx, url, NULL, NULL);
+    LOGI("avformat_open_input %s %d", url, res);
+    if(res != 0){
 
         LOGE("can not open url :%s", url);
         callJava->onCallError(CHILD_THREAD, 1001, "can not open url");

@@ -22,6 +22,10 @@ import com.wguet.myplayer.util.LogUtil;
 import com.wguet.myplayer.util.TimeUtil;
 
 
+/**
+ * @author wangmh
+ *
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getName();
@@ -154,12 +158,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //开始
         btStartPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ffPlayer.setSource("/mnt/sdcard/Music/mydream.mp3");
+                //ffPlayer.setSource("/mnt/sdcard/Music/mydream.mp3");
+                //ffPlayer.setSource("http://m10.music.126.net/20201123140618/be597c0be30186de19d5fbcf8798dac8/ymusic/e33e/ce89/f6b0/03021c4140edc953808280ac78bd35be.mp3");
                 ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
-//                ffPlayer.setSource("http://ngcdn004.cnr.cn/live/dszs/index.m3u8");
                 ffPlayer.prepared();
             }
         });
@@ -199,11 +204,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //下一首
         btNext.setOnClickListener(new View.OnClickListener(){
 
             @Override
             public void onClick(View v) {
-                ffPlayer.playNext("http://ngcdn004.cnr.cn/live/dszs/index.m3u8");
+                ffPlayer.playNext("http://ngcdn001.cnr.cn/live/zgzs/index.m3u8");
+//                ffPlayer.playNext("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
             }
         });
     }
