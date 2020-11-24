@@ -138,6 +138,10 @@ public class FFPlayer {
         return duration;
     }
 
+    public void setVolume(int percent) {
+        jniSetVolume(percent);
+    }
+
     /**
      * c++回调java的方法
      */
@@ -196,5 +200,6 @@ public class FFPlayer {
     private native void jniSeek(int seconds);
 
     private native int jniDuration();
+    private native void jniSetVolume(int percent);
 
 }

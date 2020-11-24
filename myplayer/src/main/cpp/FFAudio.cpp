@@ -241,11 +241,15 @@ void FFAudio::initOpenSLES() {
 
     // 创建音频播放对象AudioPlayer
     (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 1, ids, req);
+
     //初始化AudioPlayer
     (*pcmPlayerObject)->Realize(pcmPlayerObject, SL_BOOLEAN_FALSE);
 
     // 得到接口后调用，获取播放器接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_PLAY, &pcmPlayerPlay);
+
+    // 获取声音接口
+    (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_VOLUME, &pcmVolumePlay);
 
     // 注册回调缓冲区，获取缓冲队列接口，即音频输出的BufferQueue接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_BUFFERQUEUE, &pcmBufferQueue);
@@ -373,4 +377,11 @@ void FFAudio::release() {
     if(callJava != NULL) {
         callJava = NULL;
     }
+}
+
+void FFAudio::setVolume(int percent) {
+    if (pcmVolumePlay != NULL){
+        (*pcmVolumePlay)->SetVolumeLevel
+    }
+
 }

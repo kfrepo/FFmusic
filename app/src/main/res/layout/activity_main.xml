@@ -10,27 +10,27 @@
     <LinearLayout
         android:id="@+id/title_ll"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/bt_start"
-            android:layout_width="wrap_content"
+            android:layout_width="60dp"
             android:layout_height="40dp"
             android:text="开始" />
 
         <Button
             android:id="@+id/bt_pause"
-            android:layout_width="wrap_content"
+            android:layout_width="60dp"
             android:layout_height="40dp"
             android:text="暂停"
             android:layout_below="@+id/bt_next"/>
 
         <Button
             android:id="@+id/bt_resume"
-            android:layout_width="wrap_content"
+            android:layout_width="60dp"
             android:layout_height="40dp"
-            android:text="继续播放" />
+            android:text="继续" />
 
         <Button
             android:id="@+id/bt_stop"

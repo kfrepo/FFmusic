@@ -47,6 +47,11 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar timeSeek;
     private SeekBar volumeSeek;
 
+    /**
+     * 是否正在滑动进度条
+     */
+    private boolean isTimeSeek = false;
+
     private int currentTime;
     private int currentVolume;
 
@@ -155,7 +160,10 @@ public class MainActivity extends AppCompatActivity {
         timeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+
                 currentTime = ffPlayer.getDuration() * progress /100;
+//                LogUtil.d(TAG, "timeSeek progress " + progress + " ffPlayer.getDuration() " + ffPlayer.getDuration() + " currentTime " + currentTime);
             }
 
             @Override
@@ -165,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                ffPlayer.seek(currentTime);
 
             }
         });
@@ -172,17 +181,17 @@ public class MainActivity extends AppCompatActivity {
         volumeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
+                ffPlayer.setVolume(progress);
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
+                isTimeSeek = true;
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
+                isTimeSeek = false;
             }
         });
     }
@@ -271,7 +280,6 @@ public class MainActivity extends AppCompatActivity {
             super.handleMessage(message);
 
             MainActivity activity = mInstance == null ? null : mInstance.get();
-            //如果Activity被释放回收了，则不处理这些消息
             if (activity == null || activity.isFinishing()) {
                 return;
             }
@@ -280,7 +288,8 @@ public class MainActivity extends AppCompatActivity {
                     TimeInfoBean time = (TimeInfoBean) message.obj;
                     activity.tvPlayTime.setText(TimeUtil.secondsToDateFormat(time.getTotalTime(), time.getTotalTime())
                             + "/" + TimeUtil.secondsToDateFormat(time.getCurrentTime(), time.getTotalTime()));
-                    activity.timeSeek.setProgress(time.getCurrentTime()/time.getTotalTime()*100);
+                    int progress = time.getCurrentTime()*100/time.getTotalTime();
+                    activity.timeSeek.setProgress(progress);
                     break;
                 }
                 default:{

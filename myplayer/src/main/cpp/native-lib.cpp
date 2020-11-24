@@ -286,3 +286,11 @@ Java_com_wguet_myplayer_player_FFPlayer_jniDuration(JNIEnv *env, jobject instanc
     }
     return 0;
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_wguet_myplayer_player_FFPlayer_jniSetVolume(JNIEnv *env, jobject thiz, jint percent) {
+    if (mFFmpeg != NULL){
+        return mFFmpeg->duration;
+    }
+}
