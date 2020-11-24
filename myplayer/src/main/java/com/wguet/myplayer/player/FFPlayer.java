@@ -14,7 +14,6 @@ import com.wguet.myplayer.util.LogUtil;
 /**
  * @author workw
  */
-@SuppressWarnings({"ALL", "AlibabaAvoidManuallyCreateThread"})
 public class FFPlayer {
 
     private static final String TAG = FFPlayer.class.getName();
@@ -133,6 +132,12 @@ public class FFPlayer {
         stop();
     }
 
+    public int getDuration() {
+        int duration = jniDuration();
+        LogUtil.d("音频时长 " + duration);
+        return duration;
+    }
+
     /**
      * c++回调java的方法
      */
@@ -189,5 +194,7 @@ public class FFPlayer {
     private native void jniResume();
     private native void jniStop();
     private native void jniSeek(int seconds);
+
+    private native int jniDuration();
 
 }

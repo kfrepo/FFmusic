@@ -276,3 +276,13 @@ Java_com_wguet_myplayer_player_FFPlayer_jniSeek(JNIEnv *env, jobject instance, j
         mFFmpeg->seek(seconds);
     }
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_wguet_myplayer_player_FFPlayer_jniDuration(JNIEnv *env, jobject instance){
+
+    if (mFFmpeg != NULL){
+        return mFFmpeg->duration;
+    }
+    return 0;
+}
