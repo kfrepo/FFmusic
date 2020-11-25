@@ -88,6 +88,32 @@
             android:max="100" />
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/sound_channel_ll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/audio_volume_ll"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/sound_channel_left_bt"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="左声道" />
+
+        <Button
+            android:id="@+id/sound_channel_right_bt"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="右声道" />
+
+        <Button
+            android:id="@+id/sound_channel_stereo_bt"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="立体声" />
+
+    </LinearLayout>
+
 
     <Button
         android:id="@+id/bt_finish"
@@ -95,6 +121,6 @@
         android:layout_height="45dp"
         android:layout_marginTop="30dp"
         android:text="退出"
-        android:layout_below="@+id/audio_volume_ll"/>
+        android:layout_below="@+id/sound_channel_ll"/>
 
 </RelativeLayout>

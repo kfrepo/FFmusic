@@ -56,6 +56,7 @@ public:
     SLObjectItf pcmPlayerObject = NULL;
     SLPlayItf pcmPlayerPlay = NULL;
     SLVolumeItf pcmVolumePlay = NULL;
+    SLMuteSoloItf pcmMutePlay = NULL;
 
     //缓冲器队列接口
     SLAndroidSimpleBufferQueueItf pcmBufferQueue = NULL;
@@ -77,6 +78,8 @@ public:
     void release();
 
     void setVolume(int percent);
+
+    void setMute(int mute);
 
 
 };

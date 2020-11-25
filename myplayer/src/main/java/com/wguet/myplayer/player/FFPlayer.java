@@ -143,6 +143,14 @@ public class FFPlayer {
     }
 
     /**
+     * 声道控制
+     * @param mute
+     */
+    public void setMute(int mute) {
+        jniSetMute(mute);
+    }
+
+    /**
      * c++回调java的方法
      */
     public void onCallPrepared(){
@@ -201,5 +209,5 @@ public class FFPlayer {
 
     private native int jniDuration();
     private native void jniSetVolume(int percent);
-
+    private native void jniSetMute(int mute);
 }

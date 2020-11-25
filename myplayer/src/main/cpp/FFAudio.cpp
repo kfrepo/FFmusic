@@ -237,11 +237,11 @@ void FFAudio::initOpenSLES() {
 
     LOGI("创建播放器");
     //第四步，创建播放器
-    const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
-    const SLboolean req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[3] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_MUTESOLO};
+    const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
     // 创建音频播放对象AudioPlayer
-    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 2, ids, req);
+    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 3, ids, req);
 
     //初始化AudioPlayer
     (*pcmPlayerObject)->Realize(pcmPlayerObject, SL_BOOLEAN_FALSE);
@@ -251,6 +251,9 @@ void FFAudio::initOpenSLES() {
 
     // 获取声音接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_VOLUME, &pcmVolumePlay);
+
+    // 获取声道接口
+    (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_MUTESOLO, &pcmMutePlay);
 
     // 注册回调缓冲区，获取缓冲队列接口，即音频输出的BufferQueue接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_BUFFERQUEUE, &pcmBufferQueue);
@@ -345,6 +348,8 @@ void FFAudio::release() {
         pcmPlayerObject = NULL;
         pcmPlayerPlay = NULL;
         pcmBufferQueue = NULL;
+        pcmMutePlay = NULL;
+        pcmVolumePlay = NULL;
     }
 
 
@@ -402,6 +407,25 @@ void FFAudio::setVolume(int percent) {
             (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -40);
         }else{
             (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -100);
+        }
+    }
+}
+
+void FFAudio::setMute(int mute) {
+    if (pcmMutePlay != NULL){
+
+        if (mute == 0){
+            //右
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 1, false);
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 0, true);
+        } else if(mute == 1) {
+            //左
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 1, true);
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 0, false);
+        } else if (mute == 2){
+            //立体
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 1, false);
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 0, false);
         }
     }
 }

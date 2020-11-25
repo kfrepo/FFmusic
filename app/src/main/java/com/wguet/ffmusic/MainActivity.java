@@ -49,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView volumeTv;
     private SeekBar volumeSeek;
 
+    private Button leftBt, rightBt, stereoBt;
+
     /**
      * 是否正在滑动进度条
      */
@@ -113,6 +115,10 @@ public class MainActivity extends AppCompatActivity {
 
         volumeTv = findViewById(R.id.audio_volume_tv);
         volumeSeek = findViewById(R.id.audio_volume_sb);
+
+        leftBt = findViewById(R.id.sound_channel_left_bt);
+        rightBt = findViewById(R.id.sound_channel_right_bt);
+        stereoBt = findViewById(R.id.sound_channel_stereo_bt);
 
         //开始
         btStartPlay.setOnClickListener(new View.OnClickListener() {
@@ -193,6 +199,26 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+
+        //声道控制
+        leftBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ffPlayer.setMute(1);
+            }
+        });
+        rightBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ffPlayer.setMute(0);
+            }
+        });
+        stereoBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ffPlayer.setMute(2);
             }
         });
     }
