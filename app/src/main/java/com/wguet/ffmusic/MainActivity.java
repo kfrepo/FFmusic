@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvPlayTime;
 
     private SeekBar timeSeek;
+
+    private TextView volumeTv;
     private SeekBar volumeSeek;
 
     /**
@@ -108,6 +110,8 @@ public class MainActivity extends AppCompatActivity {
         btNext = (Button) findViewById(R.id.bt_next);
 
         timeSeek = findViewById(R.id.audio_seek_sb);
+
+        volumeTv = findViewById(R.id.audio_volume_tv);
         volumeSeek = findViewById(R.id.audio_volume_sb);
 
         //开始
@@ -160,28 +164,8 @@ public class MainActivity extends AppCompatActivity {
         timeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
-
                 currentTime = ffPlayer.getDuration() * progress /100;
-//                LogUtil.d(TAG, "timeSeek progress " + progress + " ffPlayer.getDuration() " + ffPlayer.getDuration() + " currentTime " + currentTime);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                ffPlayer.seek(currentTime);
-
-            }
-        });
-
-        volumeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                ffPlayer.setVolume(progress);
+                //LogUtil.d(TAG, "timeSeek progress " + progress + " ffPlayer.getDuration() " + ffPlayer.getDuration() + " currentTime " + currentTime);
             }
 
             @Override
@@ -191,7 +175,24 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                ffPlayer.seek(currentTime);
                 isTimeSeek = false;
+            }
+        });
+
+        volumeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                ffPlayer.setVolume(progress);
+                volumeTv.setText("音量 " + progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
     }
@@ -203,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
         ffPlayer.setPreparedListener(new FFOnPreparedListener() {
             @Override
             public void onPrepared() {
-                LogUtil.d("准备好 开始播放音频！");
+                LogUtil.d(TAG, "准备好 开始播放音频！");
                 ffPlayer.start();
             }
         });
@@ -212,9 +213,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLoad(boolean load) {
                 if(load) {
-                    LogUtil.d("加载中...");
+                    LogUtil.d(TAG, "加载中...");
                 } else {
-                    LogUtil.d("播放中...");
+                    LogUtil.d(TAG, "播放中...");
                 }
             }
         });
@@ -223,9 +224,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPause(boolean pause) {
                 if(pause) {
-                    LogUtil.d("暂停中...");
+                    LogUtil.d(TAG, "暂停中...");
                 } else {
-                    LogUtil.d("播放中...");
+                    LogUtil.d(TAG, "播放中...");
                 }
             }
         });
@@ -244,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
         ffPlayer.setFfOnErrorListener(new FFOnErrorListener() {
             @Override
             public void onError(int code, final String msg) {
-                LogUtil.e("code:" + code + " msg:" +msg);
+                LogUtil.e(TAG, "code:" + code + " msg:" +msg);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -257,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
         ffPlayer.setFfOnCompleteListener(new FFOnCompleteListener() {
             @Override
             public void onComplete() {
-                LogUtil.d("播放结束!");
+                LogUtil.d(TAG, "播放结束!");
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

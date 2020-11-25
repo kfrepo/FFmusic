@@ -50,7 +50,7 @@ int AVPacketQueue::popAVpacket(AVPacket *packet) {
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
-            LOGI("从队列里面取出一个AVpacket，还剩下 %d 个", queuePacket.size());
+            //LOGI("从队列里面取出一个AVpacket，还剩下 %d 个", queuePacket.size());
             break;
         } else {
             pthread_cond_wait(&condPacket, &mutexPacket);

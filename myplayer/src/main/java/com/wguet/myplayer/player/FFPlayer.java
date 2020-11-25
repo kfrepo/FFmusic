@@ -16,7 +16,7 @@ import com.wguet.myplayer.util.LogUtil;
  */
 public class FFPlayer {
 
-    private static final String TAG = FFPlayer.class.getName();
+    private static final String TAG = "FFPlayer";
     static {
         System.loadLibrary("native-lib");
         System.loadLibrary("avcodec-57");
@@ -71,7 +71,7 @@ public class FFPlayer {
 
     public void prepared(){
         if (TextUtils.isEmpty(source)){
-            LogUtil.e("source is null!");
+            LogUtil.e(TAG,"source is null!");
             return;
         }
 //        onCallLoad(true);
@@ -87,7 +87,7 @@ public class FFPlayer {
 
     public void start(){
         if(TextUtils.isEmpty(source)){
-            LogUtil.d("source is empty!");
+            LogUtil.d(TAG, "source is empty!");
             return;
         }
         new Thread(new Runnable() {
@@ -134,7 +134,7 @@ public class FFPlayer {
 
     public int getDuration() {
         int duration = jniDuration();
-        LogUtil.d("音频时长 " + duration);
+//        LogUtil.d(TAG, "音频时长 " + duration);
         return duration;
     }
 
@@ -164,7 +164,7 @@ public class FFPlayer {
             if (timeInfoBean == null){
                 timeInfoBean = new TimeInfoBean();
             }
-            LogUtil.d(TAG, "JNI 回调 onCallTimeInfo currentTime:" + currentTime);
+            //LogUtil.d(TAG, "JNI 回调 onCallTimeInfo currentTime:" + currentTime);
             timeInfoBean.setCurrentTime(currentTime);
             timeInfoBean.setTotalTime(totalTime);
             ffOnTimeInfoListener.onTimeInfo(timeInfoBean);

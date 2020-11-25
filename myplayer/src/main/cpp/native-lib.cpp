@@ -291,6 +291,6 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_wguet_myplayer_player_FFPlayer_jniSetVolume(JNIEnv *env, jobject thiz, jint percent) {
     if (mFFmpeg != NULL){
-        return mFFmpeg->duration;
+        mFFmpeg->setVolume(percent);
     }
 }

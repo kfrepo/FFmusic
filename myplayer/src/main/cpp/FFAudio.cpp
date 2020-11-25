@@ -35,7 +35,7 @@ void FFAudio::play(){
 //FILE *outFile = fopen("/mnt/sdcard/Music/resamplemymusic.pcm", "w");
 int FFAudio::resampleAudio() {
 
-    LOGD("START resampleAudio!");
+    //LOGD("START resampleAudio!");
     data_size = 0;
     while (playstatus != NULL && !playstatus->exit){
 
@@ -126,10 +126,10 @@ int FFAudio::resampleAudio() {
 
             //data_size 元素的个数
             //fwrite(buffer, 1, data_size, outFile);
-            LOGD("nb is %d, out_channels is %d, data_size is %d", nb, out_channels, data_size);
+            //LOGD("nb is %d, out_channels is %d, data_size is %d", nb, out_channels, data_size);
 
             now_time = avFrame->pts * av_q2d(time_base);
-            LOGD("now_time:%lf, time_base:%d/%d, pts:%lld", now_time, time_base.num, time_base.den, avFrame->pts);
+            //LOGD("now_time:%lf, time_base:%d/%d, pts:%lld", now_time, time_base.num, time_base.den, avFrame->pts);
             if(now_time < clock){
                 now_time = clock;
             }
@@ -158,7 +158,7 @@ int FFAudio::resampleAudio() {
         }
     }
     //fclose(outFile);
-    LOGD("Success resampleAudio!");
+    //LOGD("Success resampleAudio!");
     return data_size;
 }
 
@@ -168,13 +168,14 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context) {
     if(ffAudio != NULL) {
 
         int buffersize = ffAudio->resampleAudio();
-        LOGD("pcmBufferCallBack buffersize %d", buffersize);
+        //LOGD("pcmBufferCallBack buffersize %d", buffersize);
 
         if(buffersize > 0) {
 
             //假设某通道的音频信号是采样率为8kHz，位宽为16bit，20ms一帧，双通道，则一帧音频数据的大小为： int size = 8000 x 16bit x 0.02s x 2 = 5120 bit = 640 byte
             ffAudio->clock += buffersize / ((double) (ffAudio->sample_rate * 2 * 2));
-            LOGD("FFAudio pcmBufferCallBack clock is %lf, last_tiem is %lf", ffAudio->clock, ffAudio->last_tiem);
+
+            //LOGD("FFAudio pcmBufferCallBack clock is %lf, last_tiem is %lf", ffAudio->clock, ffAudio->last_tiem);
             if(ffAudio->clock - ffAudio->last_tiem >= 0.1) {
 
                 ffAudio->last_tiem = ffAudio->clock;
@@ -199,8 +200,8 @@ void FFAudio::initOpenSLES() {
     result = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
 
     //第二步 创建混音器
-    const SLInterfaceID mids[1] = {SL_IID_ENVIRONMENTALREVERB};
-    const SLboolean mreq[1] = {SL_BOOLEAN_FALSE};
+    const SLInterfaceID mids[2] = {SL_IID_ENVIRONMENTALREVERB};
+    const SLboolean mreq[2] = {SL_BOOLEAN_FALSE};
 
     // 使用第一步的engineEngine，创建音频输出Output Mix
     result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 1, mids, mreq);
@@ -236,11 +237,11 @@ void FFAudio::initOpenSLES() {
 
     LOGI("创建播放器");
     //第四步，创建播放器
-    const SLInterfaceID ids[1] = {SL_IID_BUFFERQUEUE};
-    const SLboolean req[1] = {SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
+    const SLboolean req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
     // 创建音频播放对象AudioPlayer
-    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 1, ids, req);
+    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 2, ids, req);
 
     //初始化AudioPlayer
     (*pcmPlayerObject)->Realize(pcmPlayerObject, SL_BOOLEAN_FALSE);
@@ -380,8 +381,27 @@ void FFAudio::release() {
 }
 
 void FFAudio::setVolume(int percent) {
-    if (pcmVolumePlay != NULL){
-        (*pcmVolumePlay)->SetVolumeLevel
-    }
 
+    LOGI("FFAudio::setVolume %d", percent);
+    if(pcmVolumePlay != NULL){
+        if(percent > 30){
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -20);
+        }else if(percent > 25){
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -22);
+        }else if(percent > 20){
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -25);
+        }else if(percent > 15){
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -28);
+        }else if(percent > 10){
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -30);
+        }else if(percent > 5){
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -34);
+        }else if(percent > 3){
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -37);
+        }else if(percent > 0){
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -40);
+        }else{
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -100);
+        }
+    }
 }

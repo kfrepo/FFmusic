@@ -187,7 +187,7 @@ void MFFmpeg::start() {
 
             if(avPacket->stream_index == audio->streamIndex){
 
-                LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
+//                LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
                 count++;
                 audio->queue->putAVpacket(avPacket);
             } else{
