@@ -1,6 +1,8 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 include_directories(src/main/cpp/include)
+include_directories(src/main/cpp/soundtouch/include)
+include_directories(src/main/cpp/soundtouch/SoundTouch)
 file(GLOB native_srcs "src/main/cpp/*.cpp")
 
 add_library(avcodec-57 SHARED IMPORTED)
@@ -60,6 +62,8 @@ add_library( # Sets the name of the library.
         src/main/cpp/MFFmpeg.cpp
         src/main/cpp/PlayStatus.cpp
         src/main/cpp/AVPacketQueue.cpp
+
+
 
         ${native_srcs})
 

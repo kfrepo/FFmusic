@@ -8,6 +8,9 @@
 #include "AVPacketQueue.h"
 #include "PlayStatus.h"
 #include "FFCallJava.h"
+#include "SoundTouch.h"
+
+using namespace soundtouch;
 
 extern "C"{
 #include <libavcodec/avcodec.h>
@@ -60,6 +63,9 @@ public:
 
     //缓冲器队列接口
     SLAndroidSimpleBufferQueueItf pcmBufferQueue = NULL;
+
+    SoundTouch *soundTouch =NULL;
+    SAMPLETYPE *sampleBuffer = NULL;
 
 public:
     FFAudio(PlayStatus *playStatus, int sample_rate, FFCallJava *callJava);
