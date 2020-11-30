@@ -25,6 +25,7 @@ FFCallJava::FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job) {
     jmid_timeinfo = env->GetMethodID(jlz, "onCallTimeInfo", "(II)V");
     jmid_error = env->GetMethodID(jlz, "onCallError", "(ILjava/lang/String;)V");
     jmid_complete = env->GetMethodID(jlz, "onCallComplete", "()V");
+    jmid_valumedb = env->GetMethodID(jlz, "onCallValumeDB", "(I)V");
 }
 
 FFCallJava::~FFCallJava() {
@@ -117,6 +118,21 @@ void FFCallJava::onCallComplete(int type) {
             return;
         }
         jniEnv->CallVoidMethod(jobj, jmid_complete);
+        javaVM->DetachCurrentThread();
+    }
+}
+
+void FFCallJava::onCallValumeDB(int type, int db) {
+    if(type == MAIN_THREAD){
+        jniEnv->CallVoidMethod(jobj, jmid_valumedb, db);
+    }else if(type == CHILD_THREAD){
+        JNIEnv *jniEnv;
+        if(javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK){
+            LOGE("call onCallComplete worng");
+            return;
+        }
+//        LOGI("db %d", db);
+        jniEnv->CallVoidMethod(jobj, jmid_valumedb, db);
         javaVM->DetachCurrentThread();
     }
 }

@@ -100,6 +100,8 @@ public:
     void setPitch(float pitch);
 
     void setSpeed(float speed);
+
+    int getPCMDB(char *pcmcata, size_t pcmsize);
 };
 
 

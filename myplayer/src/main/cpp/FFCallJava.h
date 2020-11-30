@@ -24,6 +24,7 @@ public:
     jmethodID jmid_timeinfo;
     jmethodID jmid_error;
     jmethodID jmid_complete;
+    jmethodID jmid_valumedb;
 
 public:
     FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job);
@@ -38,6 +39,8 @@ public:
     void onCallError(int type, int code, char *msg);
 
     void onCallComplete(int type);
+
+    void onCallValumeDB(int type, int db);
 };
 
 

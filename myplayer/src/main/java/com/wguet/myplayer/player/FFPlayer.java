@@ -9,6 +9,7 @@ import com.wguet.myplayer.listener.FFOnLoadListener;
 import com.wguet.myplayer.listener.FFOnPauseResumeListener;
 import com.wguet.myplayer.listener.FFOnPreparedListener;
 import com.wguet.myplayer.listener.FFOnTimeInfoListener;
+import com.wguet.myplayer.listener.FFOnVolumeDBListener;
 import com.wguet.myplayer.util.LogUtil;
 
 /**
@@ -39,6 +40,7 @@ public class FFPlayer {
     private FFOnTimeInfoListener ffOnTimeInfoListener;
     private FFOnErrorListener ffOnErrorListener;
     private FFOnCompleteListener ffOnCompleteListener;
+    private FFOnVolumeDBListener ffOnVolumeDBListener;
 
     public void setSource(String source){
         this.source= source;
@@ -67,7 +69,9 @@ public class FFPlayer {
     public void setFfOnCompleteListener(FFOnCompleteListener listener){
         this.ffOnCompleteListener = listener;
     }
-
+    public void setFfOnVolumeDBListener(FFOnVolumeDBListener listener){
+        this.ffOnVolumeDBListener = listener;
+    }
 
     public void prepared(){
         if (TextUtils.isEmpty(source)){
@@ -190,7 +194,7 @@ public class FFPlayer {
             if (timeInfoBean == null){
                 timeInfoBean = new TimeInfoBean();
             }
-            //LogUtil.d(TAG, "JNI 回调 onCallTimeInfo currentTime:" + currentTime);
+            LogUtil.d(TAG, "JNI 回调 onCallTimeInfo currentTime:" + currentTime);
             timeInfoBean.setCurrentTime(currentTime);
             timeInfoBean.setTotalTime(totalTime);
             ffOnTimeInfoListener.onTimeInfo(timeInfoBean);
@@ -215,6 +219,12 @@ public class FFPlayer {
         if(playNext) {
             playNext = false;
             prepared();
+        }
+    }
+
+    public void onCallValumeDB(int db) {
+        if (ffOnVolumeDBListener != null){
+            ffOnVolumeDBListener.onDbValue(db);
         }
     }
 

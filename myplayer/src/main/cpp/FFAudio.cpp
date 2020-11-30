@@ -233,8 +233,13 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context) {
                 ffAudio->last_tiem = ffAudio->clock;
                 ffAudio->callJava->onCallTimeInfo(CHILD_THREAD, ffAudio->clock, ffAudio->duration);
             }
+
+            ffAudio->callJava->onCallValumeDB(CHILD_THREAD,
+                                              ffAudio->getPCMDB(reinterpret_cast<char *>(ffAudio->sampleBuffer),
+                                                      buffersize * 4));
+
             // 调用BufferQueue的Enqueue方法，把输入数据取到buffer
-            (* ffAudio-> pcmBufferQueue)->Enqueue( ffAudio->pcmBufferQueue, (char *) ffAudio->sampleBuffer, buffersize*2*2);
+            (* ffAudio-> pcmBufferQueue)->Enqueue(ffAudio->pcmBufferQueue, (char *) ffAudio->sampleBuffer, buffersize*2*2);
         }
     }
 }
@@ -493,4 +498,28 @@ void FFAudio::setSpeed(float speed) {
     if (soundTouch != NULL){
         soundTouch->setTempo(speed);
     }
+}
+
+/**
+ * 获取所有振幅之平均值 计算db (振幅最大值 2^16-1 = 65535 最大值是 96.32db)
+ * 16 bit == 2字节 == short int
+ * 无符号16bit：96.32=20*lg(65535);
+ *
+ * @param pcmdata 转换成char类型，才可以按字节操作
+ * @param size pcmdata的大小
+ * @return
+ */
+int FFAudio::getPCMDB(char *pcmcata, size_t pcmsize) {
+    int db = 0;
+    short int pervalue = 0;
+    double sum = 0;
+    for(int i = 0; i < pcmsize; i+= 2){
+        memcpy(&pervalue, pcmcata+i, 2);
+        sum += abs(pervalue);
+    }
+    sum = sum / (pcmsize / 2);
+    if(sum > 0){
+        db = (int)20.0 *log10(sum);
+    }
+    return db;
 }

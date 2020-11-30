@@ -20,6 +20,7 @@ import com.wguet.myplayer.listener.FFOnLoadListener;
 import com.wguet.myplayer.listener.FFOnPauseResumeListener;
 import com.wguet.myplayer.listener.FFOnPreparedListener;
 import com.wguet.myplayer.listener.FFOnTimeInfoListener;
+import com.wguet.myplayer.listener.FFOnVolumeDBListener;
 import com.wguet.myplayer.player.FFPlayer;
 import com.wguet.myplayer.util.LogUtil;
 import com.wguet.myplayer.util.TimeUtil;
@@ -314,6 +315,14 @@ public class MainActivity extends AppCompatActivity {
                         tvPlayTime.setText("00/00 播放结束");
                     }
                 });
+            }
+        });
+
+        //DB
+        ffPlayer.setFfOnVolumeDBListener(new FFOnVolumeDBListener() {
+            @Override
+            public void onDbValue(int db) {
+                LogUtil.d(TAG, "onDbValue " + db);
             }
         });
     }

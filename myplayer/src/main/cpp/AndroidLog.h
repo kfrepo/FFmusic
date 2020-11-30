@@ -8,6 +8,5 @@
 
 #define LOG_DEBUG true
 
-#define LOGD(FORMAT,...) if(LOG_DEBUG)__android_log_print(ANDROID_LOG_DEBUG, "wguter",FORMAT, ##__VA_ARGS__);
-#define LOGI(FORMAT,...) if(LOG_DEBUG)__android_log_print(ANDROID_LOG_INFO, "wguter",FORMAT, ##__VA_ARGS__);
-#define LOGE(FORMAT,...) if(LOG_DEBUG)__android_log_print(ANDROID_LOG_ERROR, "wguter",FORMAT, ##__VA_ARGS__);
+#define LOGI(FORMAT,...) if(LOG_DEBUG)__android_log_print(ANDROID_LOG_INFO, "native",FORMAT, ##__VA_ARGS__);
+#define LOGE(FORMAT,...) if(LOG_DEBUG)__android_log_print(ANDROID_LOG_ERROR, "native",FORMAT, ##__VA_ARGS__);
