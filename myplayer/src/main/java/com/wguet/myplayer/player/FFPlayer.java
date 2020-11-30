@@ -93,6 +93,8 @@ public class FFPlayer {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                setPitch(pitch);
+                setSpeed(speed);
                 jniStart();
             }
         }).start();
@@ -148,6 +150,22 @@ public class FFPlayer {
      */
     public void setMute(int mute) {
         jniSetMute(mute);
+    }
+
+    private static float speed = 1.0f;
+    private static float pitch = 1.0f;
+    /**
+     * 变调
+     * @param p
+     */
+    public void setPitch(float p) {
+        pitch = p;
+        jniSetPitch(pitch);
+    }
+
+    public void setSpeed(float s) {
+        speed = s;
+        jniSetSpeed(speed);
     }
 
     /**
@@ -210,4 +228,7 @@ public class FFPlayer {
     private native int jniDuration();
     private native void jniSetVolume(int percent);
     private native void jniSetMute(int mute);
+
+    private native void jniSetPitch(float pitch);
+    private native void jniSetSpeed(float speed);
 }

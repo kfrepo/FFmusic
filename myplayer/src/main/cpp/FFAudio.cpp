@@ -12,6 +12,13 @@ FFAudio::FFAudio(PlayStatus *playStatus, int sample_rate, FFCallJava *callJava) 
     this->sample_rate = sample_rate;
     queue = new AVPacketQueue(playstatus);
     buffer = (uint8_t *) av_malloc(sample_rate * 2 * 2);
+
+    sampleBuffer = static_cast<SAMPLETYPE *>(malloc(sample_rate * 2 * 2));
+    soundTouch = new SoundTouch();
+    soundTouch->setSampleRate(sample_rate);
+    soundTouch->setChannels(2);
+    soundTouch->setPitch(pitch);
+    soundTouch->setTempo(speed);
 };
 
 FFAudio::~FFAudio() {
@@ -33,7 +40,7 @@ void FFAudio::play(){
 
 //音频重采样为PCM
 //FILE *outFile = fopen("/mnt/sdcard/Music/resamplemymusic.pcm", "w");
-int FFAudio::resampleAudio() {
+int FFAudio::resampleAudio(void **pcmbuf) {
 
     //LOGD("START resampleAudio!");
     data_size = 0;
@@ -110,9 +117,13 @@ int FFAudio::resampleAudio() {
 
             /**
              * 针对每一帧音频的处理。把一帧帧的音频作相应的重采样
-             * 参数1：音频重采样的上下文 参数2：输出的指针。传递的输出的数组 参数3：输出的样本数量，不是字节数。单通道的样本数量。 参数4：输入的数组，AVFrame解码出来的DATA 参数5：输入的单通道的样本数量。
+             * 参数1：音频重采样的上下文 参数
+             * 参数2：输出的指针。传递的输出的数组 参数
+             * 参数3：输出的样本数量，不是字节数。单通道的样本数量。
+             * 参数4：输入的数组，AVFrame解码出来的DATA
+             * 参数5：输入的单通道的样本数量。
              */
-            int nb = swr_convert(
+            nb = swr_convert(
                     swr_ctx,
                     &buffer,
                     avFrame->nb_samples,
@@ -128,13 +139,14 @@ int FFAudio::resampleAudio() {
             //fwrite(buffer, 1, data_size, outFile);
             //LOGD("nb is %d, out_channels is %d, data_size is %d", nb, out_channels, data_size);
 
+            //av_q2d(time_base)=每个刻度是多少秒  pts*av_q2d(time_base)才是帧的显示时间戳
             now_time = avFrame->pts * av_q2d(time_base);
             //LOGD("now_time:%lf, time_base:%d/%d, pts:%lld", now_time, time_base.num, time_base.den, avFrame->pts);
             if(now_time < clock){
                 now_time = clock;
             }
             clock = now_time;
-
+            *pcmbuf = buffer;
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
@@ -162,12 +174,52 @@ int FFAudio::resampleAudio() {
     return data_size;
 }
 
+
+int FFAudio::getSoundTouchData() {
+    while (playstatus!=NULL && !playstatus->exit){
+        out_buffer = NULL;
+        if (finished){
+            finished = false;
+            data_size = resampleAudio(reinterpret_cast<void **>(&out_buffer));
+            if (data_size > 0){
+                for (int i = 0; i < data_size/2; ++i) {
+                    sampleBuffer[i] = (out_buffer[i*2]) | ((out_buffer[i*2 + 1]) << 8);
+                }
+                //将8bit的数据转换成16bit 后再给SoundTouch处理
+                //把PCM数据给SoundTouch处理
+                soundTouch->putSamples(sampleBuffer, nb);
+                //循环得到处理后的PCM数据
+                num = soundTouch->receiveSamples(sampleBuffer, data_size/4);
+            } else{
+                soundTouch->flush();
+            }
+        }
+
+        if(num == 0){
+            finished = true;
+            continue;
+        } else{
+            if(out_buffer == NULL){
+                num = soundTouch->receiveSamples(sampleBuffer, data_size / 4);
+                if(num == 0){
+                    finished = true;
+                    continue;
+                }
+            }
+            return num;
+        }
+    }
+
+    return 0;
+}
+
+
 void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context) {
 
     FFAudio *ffAudio = (FFAudio *) context;
     if(ffAudio != NULL) {
 
-        int buffersize = ffAudio->resampleAudio();
+        int buffersize = ffAudio->getSoundTouchData();
         //LOGD("pcmBufferCallBack buffersize %d", buffersize);
 
         if(buffersize > 0) {
@@ -182,7 +234,7 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context) {
                 ffAudio->callJava->onCallTimeInfo(CHILD_THREAD, ffAudio->clock, ffAudio->duration);
             }
             // 调用BufferQueue的Enqueue方法，把输入数据取到buffer
-            (* ffAudio-> pcmBufferQueue)->Enqueue( ffAudio->pcmBufferQueue, (char *) ffAudio-> buffer, buffersize);
+            (* ffAudio-> pcmBufferQueue)->Enqueue( ffAudio->pcmBufferQueue, (char *) ffAudio->sampleBuffer, buffersize*2*2);
         }
     }
 }
@@ -352,7 +404,6 @@ void FFAudio::release() {
         pcmVolumePlay = NULL;
     }
 
-
     if(outputMixObject != NULL) {
         (*outputMixObject)->Destroy(outputMixObject);
         outputMixObject = NULL;
@@ -427,5 +478,19 @@ void FFAudio::setMute(int mute) {
             (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 1, false);
             (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 0, false);
         }
+    }
+}
+
+void FFAudio::setPitch(float pitch) {
+    this->pitch = pitch;
+    if (soundTouch != NULL){
+        soundTouch->setPitch(pitch);
+    }
+}
+
+void FFAudio::setSpeed(float speed) {
+    this->speed = speed;
+    if (soundTouch != NULL){
+        soundTouch->setTempo(speed);
     }
 }

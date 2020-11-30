@@ -7,6 +7,8 @@ import android.support.v7.app.AppCompatActivity;
 
 import android.view.View;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar volumeSeek;
 
     private Button leftBt, rightBt, stereoBt;
+
+    private RadioGroup speedRadioGroup, pitchRadioGroup;
 
     /**
      * 是否正在滑动进度条
@@ -119,6 +123,9 @@ public class MainActivity extends AppCompatActivity {
         leftBt = findViewById(R.id.sound_channel_left_bt);
         rightBt = findViewById(R.id.sound_channel_right_bt);
         stereoBt = findViewById(R.id.sound_channel_stereo_bt);
+
+        speedRadioGroup = findViewById(R.id.sound_speed_rg);
+        pitchRadioGroup = findViewById(R.id.sound_pitch_rg);
 
         //开始
         btStartPlay.setOnClickListener(new View.OnClickListener() {
@@ -219,6 +226,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 ffPlayer.setMute(2);
+            }
+        });
+
+        speedRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                RadioButton radioButton = findViewById(checkedId);
+                ffPlayer.setSpeed(Float.parseFloat(radioButton.getText().toString()));
+            }
+        });
+
+        pitchRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                RadioButton radioButton = findViewById(checkedId);
+                ffPlayer.setPitch(Float.parseFloat(radioButton.getText().toString()));
             }
         });
     }

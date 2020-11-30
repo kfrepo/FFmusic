@@ -46,6 +46,9 @@ public:
     double now_time = 0;//当前frame时间
     double last_tiem = 0; //上一次调用时间
 
+    float pitch = 1.0f;
+    float speed = 1.0f;
+
     //引擎接口
     SLObjectItf engineObject = NULL;
     SLEngineItf engineEngine = NULL;
@@ -64,14 +67,19 @@ public:
     //缓冲器队列接口
     SLAndroidSimpleBufferQueueItf pcmBufferQueue = NULL;
 
+    //SoundTouch
     SoundTouch *soundTouch =NULL;
     SAMPLETYPE *sampleBuffer = NULL;
+    bool finished = true;
+    uint8_t *out_buffer = NULL;
+    int nb = 0;
+    int num = 0;
 
 public:
     FFAudio(PlayStatus *playStatus, int sample_rate, FFCallJava *callJava);
     ~FFAudio();
 
-    int resampleAudio();
+    int resampleAudio(void **pcmbuf);
 
     void initOpenSLES();
 
@@ -87,7 +95,11 @@ public:
 
     void setMute(int mute);
 
+    int getSoundTouchData();
 
+    void setPitch(float pitch);
+
+    void setSpeed(float speed);
 };
 
 

@@ -303,3 +303,18 @@ Java_com_wguet_myplayer_player_FFPlayer_jniSetMute(JNIEnv *env, jobject thiz, ji
     }
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_wguet_myplayer_player_FFPlayer_jniSetPitch(JNIEnv *env, jobject thiz, jfloat pitch) {
+    if(mFFmpeg != NULL){
+        mFFmpeg->setPitch(pitch);
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_wguet_myplayer_player_FFPlayer_jniSetSpeed(JNIEnv *env, jobject thiz, jfloat speed) {
+    if(mFFmpeg != NULL){
+        mFFmpeg->setSpeed(speed);
+    }
+}

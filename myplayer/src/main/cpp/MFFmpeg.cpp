@@ -356,6 +356,18 @@ void MFFmpeg::setMute(int mute) {
     }
 }
 
+void MFFmpeg::setPitch(float pitch) {
+    if (audio != NULL){
+        audio->setPitch(pitch);
+    }
+}
+
+void MFFmpeg::setSpeed(float speed) {
+    if (audio != NULL){
+        audio->setSpeed(speed);
+    }
+}
+
 /**
 AVPacket：存储压缩数据（视频对应H.264等码流数据，音频对应AAC/MP3等码流数据）
 AVFrame：存储非压缩的数据（视频对应RGB/YUV像素数据，音频对应PCM采样数据）

@@ -63,8 +63,18 @@ add_library( # Sets the name of the library.
         src/main/cpp/PlayStatus.cpp
         src/main/cpp/AVPacketQueue.cpp
 
-
-
+        src/main/cpp/soundtouch/SoundTouch/AAFilter.cpp
+        src/main/cpp/soundtouch/SoundTouch/FIFOSampleBuffer.cpp
+        src/main/cpp/soundtouch/SoundTouch/FIRFilter.cpp
+        src/main/cpp/soundtouch/SoundTouch/cpu_detect_x86.cpp
+        src/main/cpp/soundtouch/SoundTouch/sse_optimized.cpp
+        src/main/cpp/soundtouch/SoundTouch/RateTransposer.cpp
+        src/main/cpp/soundtouch/SoundTouch/SoundTouch.cpp
+        src/main/cpp/soundtouch/SoundTouch/InterpolateCubic.cpp
+        src/main/cpp/soundtouch/SoundTouch/InterpolateLinear.cpp
+        src/main/cpp/soundtouch/SoundTouch/InterpolateShannon.cpp
+        src/main/cpp/soundtouch/SoundTouch/TDStretch.cpp
+        src/main/cpp/soundtouch/SoundTouch/PeakFinder.cpp
         ${native_srcs})
 
 find_library(
