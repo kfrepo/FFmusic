@@ -1,219 +1,251 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-
-    <LinearLayout
-        android:id="@+id/title_ll"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/bt_start"
-            android:layout_width="60dp"
-            android:layout_height="40dp"
-            android:text="开始" />
-
-        <Button
-            android:id="@+id/bt_pause"
-            android:layout_width="60dp"
-            android:layout_height="40dp"
-            android:text="暂停"
-            android:layout_below="@+id/bt_next"/>
-
-        <Button
-            android:id="@+id/bt_resume"
-            android:layout_width="60dp"
-            android:layout_height="40dp"
-            android:text="继续" />
-
-        <Button
-            android:id="@+id/bt_stop"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:text="停止播放"
-            android:layout_below="@+id/bt_resume"/>
-
-        <Button
-            android:id="@+id/bt_next"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:text="下一首" />
-    </LinearLayout>
-
-    <!-- 时间进度 -->
-    <LinearLayout
-        android:id="@+id/audio_seek_ll"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/title_ll"
-        android:layout_marginTop="10dp" >
+        android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/tv_playtime"
-            android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:text="00:00/00:00"
-            android:textColor="#222222" />
-        <SeekBar
-            android:id="@+id/audio_seek_sb"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:max="100"/>
-    </LinearLayout>
 
-    <!-- 音量 -->
-    <LinearLayout
-        android:id="@+id/audio_volume_ll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/audio_seek_ll"
-        android:layout_marginTop="10dp">
-
-        <TextView
-            android:id="@+id/audio_volume_tv"
-            android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:text="音量 50"
-            android:textColor="#222222" />
-        <SeekBar
-            android:id="@+id/audio_volume_sb"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:max="100" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/sound_channel_ll"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/audio_volume_ll"
-        android:orientation="horizontal">
-        <Button
-            android:id="@+id/sound_channel_left_bt"
+        <LinearLayout
+            android:id="@+id/title_ll"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:text="左声道" />
-
-        <Button
-            android:id="@+id/sound_channel_right_bt"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:text="右声道" />
-
-        <Button
-            android:id="@+id/sound_channel_stereo_bt"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:text="立体声" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/sound_speed_ll"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/sound_channel_ll"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:text="变速"
-            android:layout_gravity="center"
-            android:gravity="center_horizontal"
-            android:textColor="#222222" />
-
-        <RadioGroup
-            android:id="@+id/sound_speed_rg"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
             android:orientation="horizontal">
 
-            <RadioButton
-                android:id="@+id/sound_speed_1_rb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0.5" />
+            <Button
+                android:id="@+id/bt_start"
+                android:layout_width="60dp"
+                android:layout_height="40dp"
+                android:text="开始" />
 
-            <RadioButton
-                android:id="@+id/sound_speed_2_rb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="1.0"
-                android:checked="true" />
+            <Button
+                android:id="@+id/bt_pause"
+                android:layout_width="60dp"
+                android:layout_height="40dp"
+                android:layout_below="@+id/bt_next"
+                android:text="暂停" />
 
-            <RadioButton
-                android:id="@+id/sound_speed_3_rb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="1.5"/>
-            <RadioButton
-                android:id="@+id/sound_speed_4_rb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="2.0"/>
-        </RadioGroup>
-    </LinearLayout>
+            <Button
+                android:id="@+id/bt_resume"
+                android:layout_width="60dp"
+                android:layout_height="40dp"
+                android:text="继续" />
 
-    <LinearLayout
-        android:id="@+id/sound_pitch_ll"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/sound_speed_ll"
-        android:orientation="horizontal">
+            <Button
+                android:id="@+id/bt_stop"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_below="@+id/bt_resume"
+                android:text="停止播放" />
 
-        <TextView
-            android:layout_width="100dp"
+            <Button
+                android:id="@+id/bt_next"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="下一首" />
+        </LinearLayout>
+
+        <!-- 时间进度 -->
+        <LinearLayout
+            android:id="@+id/audio_seek_ll"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="变调"
-            android:layout_gravity="center"
-            android:gravity="center_horizontal"
-            android:textColor="#222222" />
+            android:layout_below="@+id/title_ll"
+            android:layout_marginTop="10dp">
 
-        <RadioGroup
-            android:id="@+id/sound_pitch_rg"
+            <TextView
+                android:id="@+id/tv_playtime"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="00:00/00:00"
+                android:textColor="#222222" />
+
+            <SeekBar
+                android:id="@+id/audio_seek_sb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100" />
+        </LinearLayout>
+
+        <!-- 音量 -->
+        <LinearLayout
+            android:id="@+id/audio_volume_ll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/audio_seek_ll"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:id="@+id/audio_volume_tv"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="音量 50"
+                android:textColor="#222222" />
+
+            <SeekBar
+                android:id="@+id/audio_volume_sb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/sound_channel_ll"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@+id/audio_volume_ll"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
-            <RadioButton
-                android:id="@+id/sound_pitch_1_rb"
+            <Button
+                android:id="@+id/sound_channel_left_bt"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="左声道" />
+
+            <Button
+                android:id="@+id/sound_channel_right_bt"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="右声道" />
+
+            <Button
+                android:id="@+id/sound_channel_stereo_bt"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="立体声" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/sound_speed_ll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/sound_channel_ll"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:text="变速"
+                android:textColor="#222222" />
+
+            <RadioGroup
+                android:id="@+id/sound_speed_rg"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0.5" />
+                android:orientation="horizontal">
 
-            <RadioButton
-                android:id="@+id/sound_pitch_2_rb"
+                <RadioButton
+                    android:id="@+id/sound_speed_1_rb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0.5" />
+
+                <RadioButton
+                    android:id="@+id/sound_speed_2_rb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="1.0" />
+
+                <RadioButton
+                    android:id="@+id/sound_speed_3_rb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1.5" />
+
+                <RadioButton
+                    android:id="@+id/sound_speed_4_rb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2.0" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/sound_pitch_ll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/sound_speed_ll"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:text="变调"
+                android:textColor="#222222" />
+
+            <RadioGroup
+                android:id="@+id/sound_pitch_rg"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="1.0"
-                android:checked="true" />
+                android:orientation="horizontal">
 
-            <RadioButton
-                android:id="@+id/sound_pitch_3_rb"
+                <RadioButton
+                    android:id="@+id/sound_pitch_1_rb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0.5" />
+
+                <RadioButton
+                    android:id="@+id/sound_pitch_2_rb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="1.0" />
+
+                <RadioButton
+                    android:id="@+id/sound_pitch_3_rb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1.5" />
+
+                <RadioButton
+                    android:id="@+id/sound_pitch_4_rb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2.0" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/sound_record_ll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/sound_pitch_ll"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/audio_start_bt"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="1.5"/>
-            <RadioButton
-                android:id="@+id/sound_pitch_4_rb"
+                android:layout_height="45dp"
+                android:text="开始录制" />
+
+            <Button
+                android:id="@+id/audio_stop_bt"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="2.0"/>
-        </RadioGroup>
-    </LinearLayout>
+                android:layout_height="45dp"
+                android:text="停止录制" />
+        </LinearLayout>
 
-    <Button
-        android:id="@+id/bt_finish"
-        android:layout_width="wrap_content"
-        android:layout_height="45dp"
-        android:layout_marginTop="90dp"
-        android:text="退出"
-        android:layout_below="@+id/sound_channel_ll"/>
-
-</RelativeLayout>
+        <Button
+            android:id="@+id/bt_finish"
+            android:layout_width="wrap_content"
+            android:layout_height="45dp"
+            android:layout_below="@+id/sound_record_ll"
+            android:layout_marginTop="50dp"
+            android:text="退出" />
+    </RelativeLayout>
+</ScrollView>

@@ -169,9 +169,11 @@ void MFFmpeg::start() {
     while(playstatus != NULL && !playstatus->exit){
 
         if (playstatus->seek){
+            av_usleep(1000 * 100);
             continue;
         }
-        if (audio->queue->getQueueSize() > 40){
+        if (audio->queue->getQueueSize() > 100){
+            av_usleep(1000 * 100);
             continue;
         }
 
@@ -201,6 +203,7 @@ void MFFmpeg::start() {
             avPacket = NULL;
             while(playstatus != NULL && !playstatus->exit){
                 if(audio->queue->getQueueSize() > 0){
+                    av_usleep(1000 * 100);
                     continue;
                 } else{
                     playstatus->exit = true;
@@ -365,6 +368,19 @@ void MFFmpeg::setPitch(float pitch) {
 void MFFmpeg::setSpeed(float speed) {
     if (audio != NULL){
         audio->setSpeed(speed);
+    }
+}
+
+int MFFmpeg::getSampleRate() {
+    if(audio != NULL){
+        return audio->avCodecContext->sample_rate;
+    }
+    return 0;
+}
+
+void MFFmpeg::startStopRecord(bool start) {
+    if(audio != NULL){
+        audio->startStopRecord(start);
     }
 }
 

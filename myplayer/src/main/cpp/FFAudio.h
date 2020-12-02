@@ -17,6 +17,7 @@ extern "C"{
 #include <libswresample/swresample.h>
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
+#include <libavutil/time.h>
 };
 
 
@@ -48,6 +49,8 @@ public:
 
     float pitch = 1.0f;
     float speed = 1.0f;
+
+    bool isRecordPcm = false;
 
     //引擎接口
     SLObjectItf engineObject = NULL;
@@ -102,6 +105,8 @@ public:
     void setSpeed(float speed);
 
     int getPCMDB(char *pcmcata, size_t pcmsize);
+
+    void startStopRecord(bool b);
 };
 
 

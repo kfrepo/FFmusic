@@ -47,6 +47,7 @@ int FFAudio::resampleAudio(void **pcmbuf) {
     while (playstatus != NULL && !playstatus->exit){
 
         if (playstatus->seek){
+            av_usleep(1000 * 100);
             continue;
         }
 
@@ -55,6 +56,7 @@ int FFAudio::resampleAudio(void **pcmbuf) {
                 playstatus->load = true;
                 callJava->onCallLoad(CHILD_THREAD, true);
             }
+            av_usleep(1000 * 100);
             continue;
         } else{
             if (playstatus->load){
@@ -233,6 +235,9 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context) {
                 ffAudio->last_tiem = ffAudio->clock;
                 ffAudio->callJava->onCallTimeInfo(CHILD_THREAD, ffAudio->clock, ffAudio->duration);
             }
+            if (ffAudio->isRecordPcm){
+                ffAudio->callJava->onCallPcmToAAc(CHILD_THREAD, buffersize * 2 * 2, ffAudio->sampleBuffer);
+            }
 
             ffAudio->callJava->onCallValumeDB(CHILD_THREAD,
                                               ffAudio->getPCMDB(reinterpret_cast<char *>(ffAudio->sampleBuffer),
@@ -294,11 +299,11 @@ void FFAudio::initOpenSLES() {
 
     LOGI("创建播放器");
     //第四步，创建播放器
-    const SLInterfaceID ids[3] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_MUTESOLO};
-    const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[4] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_PLAYBACKRATE, SL_IID_MUTESOLO};
+    const SLboolean req[4] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
     // 创建音频播放对象AudioPlayer
-    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 3, ids, req);
+    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 4, ids, req);
 
     //初始化AudioPlayer
     (*pcmPlayerObject)->Realize(pcmPlayerObject, SL_BOOLEAN_FALSE);
@@ -425,6 +430,18 @@ void FFAudio::release() {
         free(buffer);
         buffer = NULL;
     }
+    if(out_buffer != NULL){
+        //同buffer 不用free
+        out_buffer = NULL;
+    }
+    if(soundTouch == NULL){
+        delete soundTouch;
+        soundTouch = NULL;
+    }
+    if(sampleBuffer != NULL){
+        free(sampleBuffer);
+        sampleBuffer = NULL;
+    }
 
     if(avCodecContext != NULL) {
         avcodec_close(avCodecContext);
@@ -522,4 +539,8 @@ int FFAudio::getPCMDB(char *pcmcata, size_t pcmsize) {
         db = (int)20.0 *log10(sum);
     }
     return db;
+}
+
+void FFAudio::startStopRecord(bool b) {
+    this->isRecordPcm = b;
 }

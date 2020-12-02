@@ -318,3 +318,20 @@ Java_com_wguet_myplayer_player_FFPlayer_jniSetSpeed(JNIEnv *env, jobject thiz, j
         mFFmpeg->setSpeed(speed);
     }
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_wguet_myplayer_player_FFPlayer_jniSamplerate(JNIEnv *env, jobject thiz) {
+    if(mFFmpeg != NULL){
+        return mFFmpeg->getSampleRate();
+    }
+    return 0;
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_wguet_myplayer_player_FFPlayer_jniStartStopRecord(JNIEnv *env, jobject thiz,
+                                                           jboolean start) {
+    if(mFFmpeg != NULL){
+        mFFmpeg->startStopRecord(start);
+    }
+}

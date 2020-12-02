@@ -25,6 +25,7 @@ public:
     jmethodID jmid_error;
     jmethodID jmid_complete;
     jmethodID jmid_valumedb;
+    jmethodID jmie_pcmtoaac;
 
 public:
     FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job);
@@ -41,6 +42,8 @@ public:
     void onCallComplete(int type);
 
     void onCallValumeDB(int type, int db);
+
+    void onCallPcmToAAc(int type, int size, void *buffer);
 };
 
 

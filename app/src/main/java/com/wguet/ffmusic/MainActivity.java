@@ -25,6 +25,7 @@ import com.wguet.myplayer.player.FFPlayer;
 import com.wguet.myplayer.util.LogUtil;
 import com.wguet.myplayer.util.TimeUtil;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 
 
@@ -55,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
     private Button leftBt, rightBt, stereoBt;
 
     private RadioGroup speedRadioGroup, pitchRadioGroup;
+
+    private Button audioStartBt, audioStopBt;
 
     /**
      * 是否正在滑动进度条
@@ -127,6 +130,9 @@ public class MainActivity extends AppCompatActivity {
 
         speedRadioGroup = findViewById(R.id.sound_speed_rg);
         pitchRadioGroup = findViewById(R.id.sound_pitch_rg);
+
+        audioStartBt = findViewById(R.id.audio_start_bt);
+        audioStopBt = findViewById(R.id.audio_stop_bt);
 
         //开始
         btStartPlay.setOnClickListener(new View.OnClickListener() {
@@ -245,6 +251,20 @@ public class MainActivity extends AppCompatActivity {
                 ffPlayer.setPitch(Float.parseFloat(radioButton.getText().toString()));
             }
         });
+
+        audioStartBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ffPlayer.audioStartRecord(new File("/sdcard/textplayer.aac"));
+            }
+        });
+
+        audioStopBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ffPlayer.audioStopRecord();
+            }
+        });
     }
 
 
@@ -325,6 +345,7 @@ public class MainActivity extends AppCompatActivity {
                 LogUtil.d(TAG, "onDbValue " + db);
             }
         });
+
     }
 
     private static class MyHandler extends Handler {
