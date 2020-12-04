@@ -9,6 +9,8 @@
 #include "PlayStatus.h"
 #include "FFCallJava.h"
 #include "SoundTouch.h"
+#include "FFBufferQueue.h"
+#include "PcmBean.h"
 
 using namespace soundtouch;
 
@@ -77,6 +79,11 @@ public:
     uint8_t *out_buffer = NULL;
     int nb = 0;
     int num = 0;
+
+    //PCM大数据分包
+    pthread_t pcmCallBackThread;
+    FFBufferQueue *bufferQueue = NULL;
+    int defaultPcmSize = 4096;
 
 public:
     FFAudio(PlayStatus *playStatus, int sample_rate, FFCallJava *callJava);

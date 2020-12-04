@@ -193,7 +193,6 @@ public class FFPlayer {
                 LogUtil.d(TAG,"开始录制");
             }
         }
-
     }
 
     public void audioStopRecord() {
@@ -296,7 +295,7 @@ public class FFPlayer {
             //
             encoderFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
             //输入数据缓冲区的最大大小
-            encoderFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 4096*2);
+            encoderFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 4096);
             encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC);
             info = new MediaCodec.BufferInfo();
             if(encoder == null) {
@@ -315,12 +314,12 @@ public class FFPlayer {
     private void encodecPcmToAAc(int size, byte[] buffer) {
 
         double recordTime = size * 1.0 / (jniSamplerate() * 2 * (16 / 8));
-        LogUtil.d(TAG, jniSamplerate() + " " + size + " " + buffer.length + " recordTime:" + recordTime);
+        //LogUtil.d(TAG, jniSamplerate() + " " + size + " " + buffer.length + " recordTime:" + recordTime);
         if(buffer != null && encoder != null) {
 
 
             int inputBufferindex = encoder.dequeueInputBuffer(0);
-            LogUtil.d(TAG, "inputBufferindex " + inputBufferindex);
+//            LogUtil.d(TAG, "inputBufferindex " + inputBufferindex);
             if(inputBufferindex >= 0) {
                 ByteBuffer byteBuffer = encoder.getInputBuffers()[inputBufferindex];
                 byteBuffer.clear();
@@ -347,7 +346,7 @@ public class FFPlayer {
                     encoder.releaseOutputBuffer(index, false);
                     index = encoder.dequeueOutputBuffer(info, 0);
                     outByteBuffer = null;
-                    LogUtil.d(TAG,"编码...");
+//                    LogUtil.d(TAG,"编码...");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -429,7 +428,7 @@ public class FFPlayer {
             info = null;
             initMediaCodec = false;
 
-            LogUtil.d(TAG,"录制完成...releaseMedicacodec");
+            LogUtil.d(TAG,"录制完成 release encoder success!");
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

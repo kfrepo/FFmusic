@@ -62,6 +62,8 @@ add_library( # Sets the name of the library.
         src/main/cpp/MFFmpeg.cpp
         src/main/cpp/PlayStatus.cpp
         src/main/cpp/AVPacketQueue.cpp
+        src/main/cpp/FFBufferQueue.cpp
+        src/main/cpp/PcmBean.cpp
 
         src/main/cpp/soundtouch/SoundTouch/AAFilter.cpp
         src/main/cpp/soundtouch/SoundTouch/FIFOSampleBuffer.cpp

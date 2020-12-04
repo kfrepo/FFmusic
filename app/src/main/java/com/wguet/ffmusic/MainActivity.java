@@ -1,9 +1,11 @@
 package com.wguet.ffmusic;
 
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.View;
 import android.widget.Button;
@@ -27,6 +29,8 @@ import com.wguet.myplayer.util.TimeUtil;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 /**
@@ -252,10 +256,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        File file = new File(Environment.getExternalStorageDirectory(), "/ffmusic");
+        file.mkdir();
         audioStartBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ffPlayer.audioStartRecord(new File("/sdcard/textplayer.aac"));
+                SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+                String time = format.format(new Date());
+                File file = new File(Environment.getExternalStorageDirectory(), "ffmusic/" + time + ".AAC");
+                LogUtil.d(TAG, "audio record " + file.getAbsolutePath());
+                ffPlayer.audioStartRecord(file);
             }
         });
 
@@ -342,7 +352,7 @@ public class MainActivity extends AppCompatActivity {
         ffPlayer.setFfOnVolumeDBListener(new FFOnVolumeDBListener() {
             @Override
             public void onDbValue(int db) {
-                LogUtil.d(TAG, "onDbValue " + db);
+//                LogUtil.d(TAG, "onDbValue " + db);
             }
         });
 

@@ -33,8 +33,57 @@ void *decodPlay(void *data){
     pthread_exit(&ffAudio->thread_play);
 }
 
+void *pcmCallBack(void *data){
+    FFAudio *audio = static_cast<FFAudio *>(data);
+    while (audio->playstatus!=NULL && !audio->playstatus->exit){
+        PcmBean *pcmBean = NULL;
+        audio->bufferQueue->getBuffer(&pcmBean);
+        if (pcmBean == NULL){
+            continue;
+        }
+//        LOGI("pcmCallBack pcmbean buffer size is %d", pcmBean->buffsize);
+
+        if (pcmBean->buffsize <= audio->defaultPcmSize){
+            if(audio->isRecordPcm){
+                audio->callJava->onCallPcmToAAc(CHILD_THREAD, pcmBean->buffsize, pcmBean->buffer);
+            }
+        } else{
+
+            //分包
+            int pack_num = pcmBean->buffsize / audio->defaultPcmSize;
+            int pack_sub = pcmBean->buffsize % audio->defaultPcmSize;
+
+//            LOGI("pcmbean 分包 pack_num %d pack_sub %d", pack_num, pack_sub);
+            for (int i = 0; i < pack_num; ++i) {
+                char *bf = static_cast<char *>(malloc(audio->defaultPcmSize));
+                memcpy(bf, pcmBean->buffer + i*audio->defaultPcmSize, audio->defaultPcmSize);
+                if(audio->isRecordPcm){
+                    audio->callJava->onCallPcmToAAc(CHILD_THREAD, audio->defaultPcmSize, bf);
+                }
+                free(bf);
+                bf = NULL;
+            }
+
+            if (pack_sub > 0){
+                char *bf = static_cast<char *>(malloc(pack_sub));
+                memcpy(bf, pcmBean->buffer + pack_num * audio->defaultPcmSize, pack_sub);
+                if(audio->isRecordPcm){
+                    audio->callJava->onCallPcmToAAc(CHILD_THREAD, pack_sub, bf);
+                }
+                free(bf);
+                bf = NULL;
+            }
+        }
+        delete(pcmBean);
+        pcmBean = NULL;
+    }
+    pthread_exit(&audio->pcmCallBackThread);
+}
+
 void FFAudio::play(){
+    bufferQueue = new FFBufferQueue(playstatus);
     pthread_create(&thread_play, NULL, decodPlay, this);
+    pthread_create(&pcmCallBackThread, NULL, pcmCallBack, this);
 }
 
 
@@ -235,10 +284,14 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context) {
                 ffAudio->last_tiem = ffAudio->clock;
                 ffAudio->callJava->onCallTimeInfo(CHILD_THREAD, ffAudio->clock, ffAudio->duration);
             }
+
+            //边播边录
             if (ffAudio->isRecordPcm){
-                ffAudio->callJava->onCallPcmToAAc(CHILD_THREAD, buffersize * 2 * 2, ffAudio->sampleBuffer);
+                //ffAudio->callJava->onCallPcmToAAc(CHILD_THREAD, buffersize * 2 * 2, ffAudio->sampleBuffer);
+                ffAudio->bufferQueue->putBuffer(ffAudio->sampleBuffer, buffersize * 2 * 2);
             }
 
+            //音量
             ffAudio->callJava->onCallValumeDB(CHILD_THREAD,
                                               ffAudio->getPCMDB(reinterpret_cast<char *>(ffAudio->sampleBuffer),
                                                       buffersize * 4));
@@ -323,7 +376,7 @@ void FFAudio::initOpenSLES() {
     //输出缓冲接口回调
     (*pcmBufferQueue)->RegisterCallback(pcmBufferQueue, pcmBufferCallBack, this);
 
-    LOGI("播放器 开始播放!");
+    LOGI("SetPlayState 播放器 开始播放!");
     // 获取播放状态接口,设置为播放状态
     (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay, SL_PLAYSTATE_PLAYING);
     pcmBufferCallBack(pcmBufferQueue, this);
@@ -399,6 +452,14 @@ void FFAudio::stop() {
 }
 
 void FFAudio::release() {
+
+    if (bufferQueue != NULL){
+        bufferQueue->noticeThread();
+        pthread_join(pcmCallBackThread, NULL);
+        bufferQueue->release();
+        delete(bufferQueue);
+        bufferQueue = NULL;
+    }
 
     if (queue != NULL){
         delete(queue);
