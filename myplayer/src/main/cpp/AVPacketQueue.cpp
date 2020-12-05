@@ -40,7 +40,7 @@ int AVPacketQueue::popAVpacket(AVPacket *packet) {
 
     pthread_mutex_lock(&mutexPacket);
 
-    while (playStatus !=NULL && !playStatus->exit){
+    while (playStatus != NULL && !playStatus->exit){
 
         if (queuePacket.size() > 0 ){
             AVPacket *avPacket = queuePacket.front();

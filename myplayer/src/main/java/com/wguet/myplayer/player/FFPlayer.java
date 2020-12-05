@@ -341,7 +341,10 @@ public class FFPlayer {
 
                     byteBuffer.get(outByteBuffer, 7, info.size);
                     byteBuffer.position(info.offset);
-                    outputStream.write(outByteBuffer, 0, perpcmsize);
+                    if (outputStream != null){
+                        outputStream.write(outByteBuffer, 0, perpcmsize);
+                    }
+
 
                     encoder.releaseOutputBuffer(index, false);
                     index = encoder.dequeueOutputBuffer(info, 0);

@@ -21,6 +21,7 @@ MFFmpeg::~MFFmpeg() {
 }
 
 int avformat_callback(void *ctx){
+    //LOGE("MFFmpeg::avformat_callback!");
     MFFmpeg *fmpeg = (MFFmpeg *) ctx;
     if(fmpeg->playstatus->exit){
         return AVERROR_EOF;
@@ -42,6 +43,7 @@ void MFFmpeg::parpared() {
 
 void MFFmpeg::decodeFFmpegThread() {
 
+    LOGI("MFFmpeg::decodeFFmpegThread!");
     pthread_mutex_lock(&init_mutex);
     av_register_all();
     avformat_network_init();
@@ -51,7 +53,6 @@ void MFFmpeg::decodeFFmpegThread() {
     pAVFormatCtx->interrupt_callback.callback = avformat_callback;
     pAVFormatCtx->interrupt_callback.opaque = this;
 
-
     //打开一个文件并解析。可解析的内容包括：视频流、音频流、视频流参数、音频流参数、视频帧索引
     int res = avformat_open_input(&pAVFormatCtx, url, NULL, NULL);
     LOGI("avformat_open_input %s %d", url, res);
@@ -59,14 +60,12 @@ void MFFmpeg::decodeFFmpegThread() {
 
         LOGE("can not open url :%s", url);
         callJava->onCallError(CHILD_THREAD, 1001, "can not open url");
-
         exit = true;
         pthread_mutex_unlock(&init_mutex);
         return;
     }
 
-
-    //查找格式和索引。有些早期格式它的索引并没有放到头当中，需要你到后面探测，就会用到此函数
+    //解码时，作用是从文件中提取流信，将所有的Stream的MetaData信息填充好，先read_packet一段数据解码分析流数据
     if(avformat_find_stream_info(pAVFormatCtx, NULL) < 0){
 
         LOGE("can not find streams from %s", url);
@@ -77,27 +76,42 @@ void MFFmpeg::decodeFFmpegThread() {
     }
     LOGI("avformat_find_stream_info numbers %d" , pAVFormatCtx->nb_streams);
 
-    //找出文件中的音频流  nb_streams-视音频流的个数
+    //找出文件中的音频流或视频流  nb_streams-视音频流的个数
     for(int i = 0; i < pAVFormatCtx->nb_streams; i++){
 
-        //得到音频流
         if(pAVFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO){
-
+            //得到音频流
             if(audio == NULL){
-
                 audio = new FFAudio(playstatus, pAVFormatCtx->streams[i]->codecpar->sample_rate, callJava);
                 audio->streamIndex = i;
                 audio->codecpar = pAVFormatCtx->streams[i]->codecpar;
-
                 audio->duration = pAVFormatCtx->duration / AV_TIME_BASE;
                 audio->time_base = pAVFormatCtx->streams[i]->time_base;
                 duration = audio->duration;
 
                 //av_q2d(time_base)=每个刻度是多少秒
-                LOGI("avformat_find_stream_info i %d, audio duration:%d, audio time_base den:%d, sample_rate:%d" , i, audio->duration, audio->time_base.den, pAVFormatCtx->streams[i]->codecpar->sample_rate);
+                LOGI("audio stream_info %d, duration:%d, time_base den:%d, sample_rate:%d",
+                        i, audio->duration, audio->time_base.den, pAVFormatCtx->streams[i]->codecpar->sample_rate);
+            }
+        } else if (pAVFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO){
+            //得到视频流
+            if (video == NULL){
+                video = new FFVideo(playstatus, callJava);
+                video->streamIndex = i;
+                video->codecpar = pAVFormatCtx->streams[i]->codecpar;
+                video->time_base = pAVFormatCtx->streams[i]->time_base;
+                LOGI("video stream_info %d",
+                     i);
             }
         }
     }
+
+//    if(audio != NULL){
+//        getCodecContext(audio->codecpar, &audio->avCodecContext);
+//    }
+//    if(video != NULL){
+//        getCodecContext(video->codecpar, &video->avCodecContext);
+//    }
 
     //获取解码器 ,FFmpeg的解码器编码器都存在AVCodec的结构体中
     AVCodec *dec = avcodec_find_decoder(audio->codecpar->codec_id);// 软解
@@ -113,7 +127,7 @@ void MFFmpeg::decodeFFmpegThread() {
 
     LOGI("audio streamIndex->%d  codecpar-> 编码类型:%d 编码格式:%s" , audio->streamIndex, audio->codecpar->codec_type, dec->name);
 
-    ///配置解码器
+    //配置解码器
     audio->avCodecContext = avcodec_alloc_context3(dec);
     if(!audio->avCodecContext){
 
@@ -161,10 +175,11 @@ void MFFmpeg::start() {
         callJava->onCallError(CHILD_THREAD, 1006, "audio is null!");
         return;
     }
+    LOGI("MFFmpeg::start()!");
 
     audio->play();
+    video->play();
 
-    LOGI("audio start decode!");
     int count = 0;
     while(playstatus != NULL && !playstatus->exit){
 
@@ -178,25 +193,27 @@ void MFFmpeg::start() {
         }
 
         AVPacket *avPacket = av_packet_alloc();
-        pthread_mutex_lock(&seek_mutex);
+        //读取具体的音/视频帧数据
         int ret = av_read_frame(pAVFormatCtx, avPacket);
-        pthread_mutex_unlock(&seek_mutex);
-
         if (ret==0){
 
-//        }
-//        if(av_read_frame(pAVFormatCtx, avPacket) == 0){
-
+            //stream_index：标识该AVPacket所属的视频/音频流
             if(avPacket->stream_index == audio->streamIndex){
 
-//                LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
+                LOGI("audio 解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
                 count++;
                 audio->queue->putAVpacket(avPacket);
+            } else if(avPacket->stream_index == video->streamIndex){
+
+                LOGI("video 解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
+                count++;
+                video->queue->putAVpacket(avPacket);
             } else{
                 av_packet_free(&avPacket);
                 av_free(avPacket);
                 avPacket = NULL;
             }
+
         } else{
             av_packet_free(&avPacket);
             av_free(avPacket);
@@ -219,45 +236,6 @@ void MFFmpeg::start() {
     }
     exit = true;
     LOGE("解码完成");
-//    while(1)
-//    {
-//        //分配一个结构体大小的内存,返回的是一个AVPacket的一个指针
-//        AVPacket *avPacket = av_packet_alloc();
-//
-//        //读取具体的音/视频帧数据
-//        if(av_read_frame(pAVFormatCtx, avPacket) == 0)
-//        {
-//            //stream_index：标识该AVPacket所属的视频/音频流
-//            if(avPacket->stream_index == audio->streamIndex){
-//                //解码操作
-//                count++;
-//                LOGI("解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
-//                audio->queue->putAVpacket(avPacket);
-//
-//            } else{
-//                av_packet_free(&avPacket);
-//                av_free(avPacket);
-//            }
-//        } else{
-//
-//            LOGE("decode finished");
-//
-//            av_packet_free(&avPacket);
-//            av_free(avPacket);
-//            break;
-//        }
-//    }
-
-//    //模拟出队
-//    while (audio->queue->getQueueSize() > 0){
-//
-//        AVPacket *packet = av_packet_alloc();
-//        audio->queue->popAVpacket(packet);
-//        av_packet_free(&packet);
-//        av_free(packet);
-//        packet = NULL;
-//    }
-
 }
 
 void MFFmpeg::pause() {
@@ -350,7 +328,6 @@ void MFFmpeg::setVolume(int percent) {
     if (audio != NULL){
         audio->setVolume(percent);
     }
-
 }
 
 void MFFmpeg::setMute(int mute) {
@@ -384,7 +361,42 @@ void MFFmpeg::startStopRecord(bool start) {
     }
 }
 
-/**
-AVPacket：存储压缩数据（视频对应H.264等码流数据，音频对应AAC/MP3等码流数据）
-AVFrame：存储非压缩的数据（视频对应RGB/YUV像素数据，音频对应PCM采样数据）
-**/
+int MFFmpeg::getCodecContext(AVCodecParameters *codecpar, AVCodecContext **avCodecContext) {
+
+    //获取解码器 存储编解码器信息的结构体
+    AVCodec *avCodec = avcodec_find_decoder(codecpar->codec_id);// 软解
+    //avCodec = avcodec_find_decoder_by_name("mp3_mediacodec"); // 硬解
+    if (!avCodec){
+        LOGE("MFFmpeg::getCodecContext can not find decoder!");
+        callJava->onCallError(CHILD_THREAD, 1003, "can not find decoder");
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+
+    *avCodecContext = avcodec_alloc_context3(avCodec);
+    if (!audio->avCodecContext){
+        LOGE("can not alloc new decodecctx");
+        callJava->onCallError(CHILD_THREAD, 1004, "can not alloc new decodecctx");
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+
+    if (avcodec_parameters_to_context(*avCodecContext, codecpar) < 0){
+        LOGE("can not fill decodecctx");
+        callJava->onCallError(CHILD_THREAD, 1005, "ccan not fill decodecctx");
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+
+    if(avcodec_open2(*avCodecContext, avCodec, 0) != 0){
+        LOGE("cant not open audio strames");
+        callJava->onCallError(CHILD_THREAD, 1006, "cant not open audio strames");
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+    return 0;
+}

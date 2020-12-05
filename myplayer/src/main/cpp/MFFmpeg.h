@@ -8,6 +8,7 @@
 #include "FFCallJava.h"
 #include "pthread.h"
 #include "FFAudio.h"
+#include "FFVideo.h"
 #include "PlayStatus.h"
 
 extern "C"
@@ -24,6 +25,7 @@ public:
     pthread_t decodeThread;
     AVFormatContext *pAVFormatCtx;//整个媒体流的处理流程中都会用到的对象,媒体文件或媒体流的构成和基本信息
     FFAudio *audio = NULL;
+    FFVideo *video = NULL;
     PlayStatus *playstatus = NULL;
 
     pthread_mutex_t init_mutex;
@@ -37,6 +39,8 @@ public:
     ~MFFmpeg();
 
     void decodeFFmpegThread();
+
+    int getCodecContext(AVCodecParameters *codecpar, AVCodecContext **avCodecContext);
 
     void parpared();
     void start();

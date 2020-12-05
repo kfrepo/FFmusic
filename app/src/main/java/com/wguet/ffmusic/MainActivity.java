@@ -81,35 +81,10 @@ public class MainActivity extends AppCompatActivity {
         initCallBack();
 
         initView();
+
         myHandler = new MyHandler(this);
 
-//        Demo demo;
-//        demo = new Demo();
-//        demo.testFFmpeg();
-//        demo.setOnErrotListener(new Demo.OnErrotListener() {
-//            @Override
-//            public void onError(int code, String msg) {
-//                Log.e("MainActivity", "code = " + code + " msg = " + msg);
-//            }
-//        });
-//
-//        demo.normalThread();
-//        demo.mutexThread();
-//
-//        mainThread.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                demo.callbackFromC();
-//            }
-//        });
-//
-//        childThread.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                demo.callbackFromC();
-//            }
-//        });
-
+        PermissionUtils.isGrantExternalRW(this, 1001);
     }
 
 
@@ -138,12 +113,13 @@ public class MainActivity extends AppCompatActivity {
         audioStartBt = findViewById(R.id.audio_start_bt);
         audioStopBt = findViewById(R.id.audio_stop_bt);
 
-        //开始
+        //开始播放
         btStartPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //ffPlayer.setSource("/mnt/sdcard/Music/mydream.mp3");
+
                 ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
+                ffPlayer.setSource("/storage/emulated/0/cqz01.720p.mp4");
                 ffPlayer.prepared();
             }
         });
@@ -284,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
         ffPlayer.setPreparedListener(new FFOnPreparedListener() {
             @Override
             public void onPrepared() {
-                LogUtil.d(TAG, "准备好 开始播放音频！");
+                LogUtil.d(TAG, "FFMpeg 准备好 开始播放音频！call jniStart");
                 ffPlayer.start();
             }
         });
