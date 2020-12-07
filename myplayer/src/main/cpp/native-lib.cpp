@@ -18,10 +18,8 @@ Java_com_wguet_myplayer_Demo_testFFmpeg(JNIEnv *env, jobject instance) {
 
     av_register_all();
     AVCodec *c_temp = av_codec_next(NULL);
-    while (c_temp != NULL)
-    {
-        switch (c_temp->type)
-        {
+    while (c_temp != NULL){
+        switch (c_temp->type){
             case AVMEDIA_TYPE_VIDEO:
                 LOGI("[Video]:%s", c_temp->name);
                 break;
@@ -35,81 +33,6 @@ Java_com_wguet_myplayer_Demo_testFFmpeg(JNIEnv *env, jobject instance) {
         c_temp = c_temp->next;
     }
 }
-
-
-pthread_t thread;
-void *threadCallBack(void *data){
-
-    LOGI("thread threadCallBack !");
-    pthread_exit(&thread);
-}
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_wguet_myplayer_Demo_normalThread(JNIEnv *env, jobject instance) {
-
-    pthread_create(&thread, NULL, threadCallBack, NULL);
-}
-
-
-/**
- * 生产者 消费者模型
- */
-#include <queue>
-#include <unistd.h>
-pthread_t producer;//生产者线程
-pthread_t customer;//消费者线程
-pthread_mutex_t mutex;//线程锁
-pthread_cond_t cond;//条件变量 是利用线程间共享的全局变量进行同步的一种机制
-
-std::queue<int> queue;
-
-void *producCallBack(void *data){
-
-    while(1){
-
-        pthread_mutex_lock(&mutex);
-        queue.push(1);
-        LOGI("生产者:生产一个产品,剩余产品%d", queue.size());
-        pthread_cond_signal(&cond);
-        pthread_mutex_unlock(&mutex);
-        sleep(5);
-    }
-}
-
-void *customCallBack(void *data){
-
-    while(1){
-        pthread_mutex_lock(&mutex);
-        if (queue.size() > 0){
-            queue.pop();
-            LOGI("消费者:消费一个产品，剩余产品%d", queue.size());
-        }else {
-            LOGI("消费者:没有产品可以消费，等待中...");
-            //用于线程阻塞等待，直到pthread_cond_signal发出条件信号后
-            //才执行退出线程阻塞执行后面的操作
-            pthread_cond_wait(&cond, &mutex);
-        }
-
-        pthread_mutex_unlock(&mutex);
-        sleep(1);
-    }
-}
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_wguet_myplayer_Demo_mutexThread(JNIEnv *env, jobject instance) {
-
-    for (int i = 0; i < 10; ++i) {
-        queue.push(i);
-    }
-
-    pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init(&cond, NULL);
-
-    pthread_create(&producer, NULL, producCallBack, NULL);
-    pthread_create(&customer, NULL, customCallBack, NULL);
-}
-
-
 
 /*********************************调用Java 方法***************************************/
 

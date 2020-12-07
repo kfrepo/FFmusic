@@ -259,6 +259,10 @@ public class FFPlayer {
         }
     }
 
+    public void onCallRenderYUV(int width, int height, byte[] y, byte[] u, byte[] v) {
+        //LogUtil.d(TAG, String.format("获取到视频的yuv数据 %dx%d y:%d u:%d v:%d", width, height, y.length, u.length, v.length));
+    }
+
     private native void jniPrepared(String source);
     private native void jniStart();
     private native void jniPause();
@@ -317,7 +321,6 @@ public class FFPlayer {
         //LogUtil.d(TAG, jniSamplerate() + " " + size + " " + buffer.length + " recordTime:" + recordTime);
         if(buffer != null && encoder != null) {
 
-
             int inputBufferindex = encoder.dequeueInputBuffer(0);
 //            LogUtil.d(TAG, "inputBufferindex " + inputBufferindex);
             if(inputBufferindex >= 0) {
@@ -344,7 +347,6 @@ public class FFPlayer {
                     if (outputStream != null){
                         outputStream.write(outByteBuffer, 0, perpcmsize);
                     }
-
 
                     encoder.releaseOutputBuffer(index, false);
                     index = encoder.dequeueOutputBuffer(info, 0);

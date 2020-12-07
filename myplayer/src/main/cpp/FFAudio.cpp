@@ -142,6 +142,7 @@ int FFAudio::resampleAudio(void **pcmbuf) {
 
                 avFrame->channels = av_get_channel_layout_nb_channels(avFrame->channel_layout);
             }
+            //LOGI("解码 audio AVframe  %d", avFrame->pkt_size);
 
             SwrContext *swr_ctx = NULL;
             //根据通道布局、音频数据格式、采样频率，返回分配的转换上下文
@@ -260,7 +261,6 @@ int FFAudio::getSoundTouchData() {
             return num;
         }
     }
-
     return 0;
 }
 

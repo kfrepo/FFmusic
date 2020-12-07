@@ -106,59 +106,57 @@ void MFFmpeg::decodeFFmpegThread() {
         }
     }
 
-//    if(audio != NULL){
-//        getCodecContext(audio->codecpar, &audio->avCodecContext);
+    if(audio != NULL){
+        getCodecContext(audio->codecpar, &audio->avCodecContext);
+    }
+    if(video != NULL){
+        getCodecContext(video->codecpar, &video->avCodecContext);
+    }
+
+//    //获取解码器 ,FFmpeg的解码器编码器都存在AVCodec的结构体中
+//    AVCodec *dec = avcodec_find_decoder(audio->codecpar->codec_id);// 软解
+//    if(!dec){
+//
+//        LOGE("can not find decoder");
+//        callJava->onCallError(CHILD_THREAD, 1003, "can not find decoder");
+//        exit = true;
+//        pthread_mutex_unlock(&init_mutex);
+//        return;
 //    }
-//    if(video != NULL){
-//        getCodecContext(video->codecpar, &video->avCodecContext);
+//
+//    LOGI("audio streamIndex->%d  codecpar-> 编码类型:%d 编码格式:%s" , audio->streamIndex, audio->codecpar->codec_type, dec->name);
+//
+//    //配置解码器
+//    audio->avCodecContext = avcodec_alloc_context3(dec);
+//    if(!audio->avCodecContext){
+//
+//        LOGE("can not alloc new decodecctx");
+//        callJava->onCallError(CHILD_THREAD, 1004, "can not alloc new decodecctx");
+//        exit = true;
+//        pthread_mutex_unlock(&init_mutex);
+//        return;
 //    }
-
-    //获取解码器 ,FFmpeg的解码器编码器都存在AVCodec的结构体中
-    AVCodec *dec = avcodec_find_decoder(audio->codecpar->codec_id);// 软解
-//     dec = avcodec_find_decoder_by_name("mp3_mediacodec"); // 硬解
-    if(!dec){
-
-        LOGE("can not find decoder");
-        callJava->onCallError(CHILD_THREAD, 1003, "can not find decoder");
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return;
-    }
-
-    LOGI("audio streamIndex->%d  codecpar-> 编码类型:%d 编码格式:%s" , audio->streamIndex, audio->codecpar->codec_type, dec->name);
-
-    //配置解码器
-    audio->avCodecContext = avcodec_alloc_context3(dec);
-    if(!audio->avCodecContext){
-
-        LOGE("can not alloc new decodecctx");
-        callJava->onCallError(CHILD_THREAD, 1004, "can not alloc new decodecctx");
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return;
-    }
-
-    //将音频流信息拷贝到新的AVCodecContext结构体中 avCodecContext = codecpar
-    if(avcodec_parameters_to_context(audio->avCodecContext, audio->codecpar) < 0){
-        LOGE("can not fill decodecctx");
-        callJava->onCallError(CHILD_THREAD, 1005, "can not fill decodecctx");
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return;
-    }
-
-    //该函数用于初始化一个视音频编解码器的AVCodecContext,位于libavcodec\avcodec.h 打开解码器
-    if(avcodec_open2(audio->avCodecContext, dec, 0) != 0){
-
-        LOGE("cant not open audio strames");
-        callJava->onCallError(CHILD_THREAD, 1006, "cant not open audio strames");
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return;
-    }
+//
+//    //将音频流信息拷贝到新的AVCodecContext结构体中 avCodecContext = codecpar
+//    if(avcodec_parameters_to_context(audio->avCodecContext, audio->codecpar) < 0){
+//        LOGE("can not fill decodecctx");
+//        callJava->onCallError(CHILD_THREAD, 1005, "can not fill decodecctx");
+//        exit = true;
+//        pthread_mutex_unlock(&init_mutex);
+//        return;
+//    }
+//
+//    //该函数用于初始化一个视音频编解码器的AVCodecContext,位于libavcodec\avcodec.h 打开解码器
+//    if(avcodec_open2(audio->avCodecContext, dec, 0) != 0){
+//
+//        LOGE("cant not open audio strames");
+//        callJava->onCallError(CHILD_THREAD, 1006, "cant not open audio strames");
+//        exit = true;
+//        pthread_mutex_unlock(&init_mutex);
+//        return;
+//    }
 
     if (callJava != NULL){
-
         if (playstatus != NULL && !playstatus->exit){
             callJava->onCallPrepared(CHILD_THREAD);
         } else{
@@ -166,6 +164,50 @@ void MFFmpeg::decodeFFmpegThread() {
         }
     }
     pthread_mutex_unlock(&init_mutex);
+}
+
+int MFFmpeg::getCodecContext(AVCodecParameters *codecpar, AVCodecContext **avCodecContext) {
+
+    //查找对应的解码器 存储编解码器信息的结构体
+    AVCodec *avCodec = avcodec_find_decoder(codecpar->codec_id);// 软解
+    //avCodec = avcodec_find_decoder_by_name("mp3_mediacodec"); // 硬解
+    if (!avCodec){
+        LOGE("MFFmpeg::getCodecContext can not find decoder!");
+        callJava->onCallError(CHILD_THREAD, 1003, "can not find decoder");
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+    LOGI("getCodecContext  codecpar-> 解码类型:%d 编码格式:%s" , codecpar->codec_type, avCodec->name);
+
+    //配置解码器
+    *avCodecContext = avcodec_alloc_context3(avCodec);
+    if (!audio->avCodecContext){
+        LOGE("can not alloc new decodecctx");
+        callJava->onCallError(CHILD_THREAD, 1004, "can not alloc new decodecctx");
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+
+    //将音频流信息拷贝到新的AVCodecContext结构体中 avCodecContext = codecpar
+    if (avcodec_parameters_to_context(*avCodecContext, codecpar) < 0){
+        LOGE("can not fill decodecctx");
+        callJava->onCallError(CHILD_THREAD, 1005, "ccan not fill decodecctx");
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+
+    //打开编解码器
+    if(avcodec_open2(*avCodecContext, avCodec, 0) != 0){
+        LOGE("cant not open strames");
+        callJava->onCallError(CHILD_THREAD, 1006, "cant not open strames");
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+    return 0;
 }
 
 void MFFmpeg::start() {
@@ -200,12 +242,12 @@ void MFFmpeg::start() {
             //stream_index：标识该AVPacket所属的视频/音频流
             if(avPacket->stream_index == audio->streamIndex){
 
-                LOGI("audio 解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
+                //LOGI("audio 解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
                 count++;
                 audio->queue->putAVpacket(avPacket);
             } else if(avPacket->stream_index == video->streamIndex){
 
-                LOGI("video 解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
+                //LOGI("video 解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
                 count++;
                 video->queue->putAVpacket(avPacket);
             } else{
@@ -259,14 +301,13 @@ void MFFmpeg::release() {
     playstatus->exit = true;
 
     pthread_mutex_lock(&init_mutex);
-    int sleepCount = 0;
 
+    int sleepCount = 0;
     while(!exit){
 
         if (sleepCount > 1000){
             exit = true;
         }
-
         LOGE("wait ffmpeg  exit %d", sleepCount);
         sleepCount++;
         //暂停10毫秒
@@ -278,6 +319,13 @@ void MFFmpeg::release() {
         audio->release();
         delete(audio);
         audio = NULL;
+    }
+
+    LOGE("释放Video");
+    if(video != NULL){
+        video->release();
+        delete(video);
+        video = NULL;
     }
 
     LOGE("释放 封装格式上下文");
@@ -361,42 +409,3 @@ void MFFmpeg::startStopRecord(bool start) {
     }
 }
 
-int MFFmpeg::getCodecContext(AVCodecParameters *codecpar, AVCodecContext **avCodecContext) {
-
-    //获取解码器 存储编解码器信息的结构体
-    AVCodec *avCodec = avcodec_find_decoder(codecpar->codec_id);// 软解
-    //avCodec = avcodec_find_decoder_by_name("mp3_mediacodec"); // 硬解
-    if (!avCodec){
-        LOGE("MFFmpeg::getCodecContext can not find decoder!");
-        callJava->onCallError(CHILD_THREAD, 1003, "can not find decoder");
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return -1;
-    }
-
-    *avCodecContext = avcodec_alloc_context3(avCodec);
-    if (!audio->avCodecContext){
-        LOGE("can not alloc new decodecctx");
-        callJava->onCallError(CHILD_THREAD, 1004, "can not alloc new decodecctx");
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return -1;
-    }
-
-    if (avcodec_parameters_to_context(*avCodecContext, codecpar) < 0){
-        LOGE("can not fill decodecctx");
-        callJava->onCallError(CHILD_THREAD, 1005, "ccan not fill decodecctx");
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return -1;
-    }
-
-    if(avcodec_open2(*avCodecContext, avCodec, 0) != 0){
-        LOGE("cant not open audio strames");
-        callJava->onCallError(CHILD_THREAD, 1006, "cant not open audio strames");
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return -1;
-    }
-    return 0;
-}

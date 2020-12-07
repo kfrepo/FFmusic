@@ -7,9 +7,14 @@
 
 #include "AVPacketQueue.h"
 #include "FFCallJava.h"
+
 extern "C"{
 #include <libavcodec/avcodec.h>
+#include <libavutil/time.h>
+#include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
 };
+
 class FFVideo {
 public:
     int streamIndex = -1;
@@ -23,11 +28,14 @@ public:
     AVRational time_base;//时基。通过该值可以把PTS，DTS转化为真正的时间 PTS*time_base=真正的时间
 
     pthread_t thread_playvideo;
+
 public:
     FFVideo(PlayStatus *playStatus, FFCallJava *callJava);
     ~FFVideo();
 
     void play();
+
+    void release();
 };
 
 

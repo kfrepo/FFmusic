@@ -27,6 +27,7 @@ FFCallJava::FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job) {
     jmid_complete = env->GetMethodID(jlz, "onCallComplete", "()V");
     jmid_valumedb = env->GetMethodID(jlz, "onCallValumeDB", "(I)V");
     jmie_pcmtoaac = env->GetMethodID(jlz, "encodecPcmToAAc", "(I[B)V");
+    jmid_renderyuv = env->GetMethodID(jlz, "onCallRenderYUV", "(II[B[B[B)V");
 }
 
 FFCallJava::~FFCallJava() {
@@ -160,5 +161,28 @@ void FFCallJava::onCallPcmToAAc(int type, int size, void *buffer) {
 
         javaVM->DetachCurrentThread();
     }
+}
 
+void FFCallJava::onCallRenderYUV(int width, int height, uint8_t *fy, uint8_t *fu, uint8_t *fv) {
+    JNIEnv *jniEnv;
+    if (javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK){
+        LOGE("call onCallRenderYUV worng");
+        return;
+    }
+    jbyteArray y = jniEnv->NewByteArray(width * height);
+    jniEnv->SetByteArrayRegion(y, 0, width*height, reinterpret_cast<const jbyte *>(fy));
+
+    jbyteArray u = jniEnv->NewByteArray(width * height / 4);
+    jniEnv->SetByteArrayRegion(u, 0, width * height / 4, reinterpret_cast<const jbyte *>(fu));
+
+    jbyteArray v = jniEnv->NewByteArray(width * height / 4);
+    jniEnv->SetByteArrayRegion(v, 0, width * height / 4, reinterpret_cast<const jbyte *>(fv));
+
+    jniEnv->CallVoidMethod(jobj, jmid_renderyuv, width, height, y, u, v);
+
+    jniEnv->DeleteLocalRef(y);
+    jniEnv->DeleteLocalRef(u);
+    jniEnv->DeleteLocalRef(v);
+
+    javaVM->DetachCurrentThread();
 }

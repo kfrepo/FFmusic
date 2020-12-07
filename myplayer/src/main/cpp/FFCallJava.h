@@ -7,6 +7,7 @@
 
 #include "jni.h"
 #include <linux/stddef.h>
+#include <stdint.h>
 
 #include "AndroidLog.h"
 
@@ -26,6 +27,7 @@ public:
     jmethodID jmid_complete;
     jmethodID jmid_valumedb;
     jmethodID jmie_pcmtoaac;
+    jmethodID jmid_renderyuv;
 
 public:
     FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job);
@@ -44,6 +46,8 @@ public:
     void onCallValumeDB(int type, int db);
 
     void onCallPcmToAAc(int type, int size, void *buffer);
+
+    void onCallRenderYUV(int width, int height, uint8_t *fy, uint8_t *fu, uint8_t *fv);
 };
 
 
