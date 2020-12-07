@@ -23,6 +23,7 @@ void *playVideo(void *data){
             continue;
         }
 
+//        LOGI("FFVideo video->queue->getQueueSize() %d", video->queue->getQueueSize());
         if (video->queue->getQueueSize() == 0){
             if (!video->playstatus->load){
                 video->playstatus->load = true;

@@ -14,6 +14,7 @@ import com.wguet.myplayer.listener.FFOnPauseResumeListener;
 import com.wguet.myplayer.listener.FFOnPreparedListener;
 import com.wguet.myplayer.listener.FFOnTimeInfoListener;
 import com.wguet.myplayer.listener.FFOnVolumeDBListener;
+import com.wguet.myplayer.opengl.MGLSurfaceView;
 import com.wguet.myplayer.util.LogUtil;
 
 import java.io.File;
@@ -43,6 +44,8 @@ public class FFPlayer {
     private boolean playNext;
     private TimeInfoBean timeInfoBean;
     private static boolean initMediaCodec = false;
+
+    private MGLSurfaceView mglSurfaceView;
 
     private FFOnPreparedListener preparedListener;
     private FFOnLoadListener ffOnLoadListener;
@@ -203,6 +206,11 @@ public class FFPlayer {
         }
     }
 
+    public void setMGLSurfaceView(MGLSurfaceView surfaceView) {
+        mglSurfaceView = surfaceView;
+    }
+
+
     /**
      * c++回调java的方法
      */
@@ -261,6 +269,9 @@ public class FFPlayer {
 
     public void onCallRenderYUV(int width, int height, byte[] y, byte[] u, byte[] v) {
         //LogUtil.d(TAG, String.format("获取到视频的yuv数据 %dx%d y:%d u:%d v:%d", width, height, y.length, u.length, v.length));
+        if (mglSurfaceView != null){
+            mglSurfaceView.setYUVData(width, height, y, u, v);
+        }
     }
 
     private native void jniPrepared(String source);

@@ -23,6 +23,7 @@ import com.wguet.myplayer.listener.FFOnPauseResumeListener;
 import com.wguet.myplayer.listener.FFOnPreparedListener;
 import com.wguet.myplayer.listener.FFOnTimeInfoListener;
 import com.wguet.myplayer.listener.FFOnVolumeDBListener;
+import com.wguet.myplayer.opengl.MGLSurfaceView;
 import com.wguet.myplayer.player.FFPlayer;
 import com.wguet.myplayer.util.LogUtil;
 import com.wguet.myplayer.util.TimeUtil;
@@ -63,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Button audioStartBt, audioStopBt;
 
+    private MGLSurfaceView mglSurfaceView;
+
     /**
      * 是否正在滑动进度条
      */
@@ -78,9 +81,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initCallBack();
-
         initView();
+        initCallBack();
 
         myHandler = new MyHandler(this);
 
@@ -112,14 +114,15 @@ public class MainActivity extends AppCompatActivity {
 
         audioStartBt = findViewById(R.id.audio_start_bt);
         audioStopBt = findViewById(R.id.audio_stop_bt);
+        mglSurfaceView = findViewById(R.id.surface_yuv);
+
 
         //开始播放
         btStartPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
-                ffPlayer.setSource("/storage/emulated/0/cqz01.720p.mp4");
+                ffPlayer.setSource("/storage/emulated/0/720p.mp4");
                 ffPlayer.prepared();
             }
         });
@@ -257,6 +260,7 @@ public class MainActivity extends AppCompatActivity {
     private void initCallBack(){
 
         ffPlayer = new FFPlayer();
+        ffPlayer.setMGLSurfaceView(mglSurfaceView);
         ffPlayer.setPreparedListener(new FFOnPreparedListener() {
             @Override
             public void onPrepared() {
@@ -269,9 +273,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLoad(boolean load) {
                 if(load) {
-                    LogUtil.d(TAG, "加载中...");
+                    LogUtil.d(TAG, "LoadListener 加载中...");
                 } else {
-                    LogUtil.d(TAG, "播放中...");
+                    LogUtil.d(TAG, "LoadListener 播放中...");
                 }
             }
         });

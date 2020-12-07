@@ -99,7 +99,7 @@ int FFAudio::resampleAudio(void **pcmbuf) {
             av_usleep(1000 * 100);
             continue;
         }
-
+//        LOGI("FFAudio queue->getQueueSize() %d", queue->getQueueSize());
         if(queue->getQueueSize() == 0){
             if (!playstatus->load){
                 playstatus->load = true;

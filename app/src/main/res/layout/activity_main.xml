@@ -10,17 +10,24 @@
         android:layout_height="match_parent">
 
         <TextView
-            android:id="@+id/music_url_tv"
+            android:id="@+id/url_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3"/>
+
+        <com.wguet.myplayer.opengl.MGLSurfaceView
+            android:id="@+id/surface_yuv"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_below="@+id/url_tv"/>
+
 
         <LinearLayout
             android:id="@+id/title_ll"
             android:layout_width="wrap_content"
             android:layout_height="50dp"
             android:orientation="horizontal"
-            android:layout_below="@+id/music_url_tv">
+            android:layout_below="@+id/surface_yuv">
 
             <Button
                 android:id="@+id/bt_start"
