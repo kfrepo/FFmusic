@@ -100,8 +100,15 @@ void MFFmpeg::decodeFFmpegThread() {
                 video->streamIndex = i;
                 video->codecpar = pAVFormatCtx->streams[i]->codecpar;
                 video->time_base = pAVFormatCtx->streams[i]->time_base;
-                LOGI("video stream_info %d",
-                     i);
+
+                int num = pAVFormatCtx->streams[i]->avg_frame_rate.num;
+                int den = pAVFormatCtx->streams[i]->avg_frame_rate.den;
+                LOGI("video stream_info frame_rate num %d,den %d", num, den);
+                if(num != 0 && den != 0){
+                    int fps = num / den;//[25 / 1]
+                    video->defaultDelayTime = 1.0 / fps;
+                }
+                LOGI("video stream_info %d, defaultDelayTime is %f", i, video->defaultDelayTime);
             }
         }
     }
@@ -218,6 +225,13 @@ void MFFmpeg::start() {
         return;
     }
     LOGI("MFFmpeg::start()!");
+
+    if(video == NULL){
+        LOGE("video is null!");
+        return;
+    }
+
+    video->audio = audio;
 
     audio->play();
     video->play();

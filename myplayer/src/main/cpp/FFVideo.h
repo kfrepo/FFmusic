@@ -7,6 +7,7 @@
 
 #include "AVPacketQueue.h"
 #include "FFCallJava.h"
+#include "FFAudio.h"
 
 extern "C"{
 #include <libavcodec/avcodec.h>
@@ -29,6 +30,11 @@ public:
 
     pthread_t thread_playvideo;
 
+    FFAudio *audio = NULL;
+    double clock = 0;
+    double delayTime = 0;
+    double defaultDelayTime = 0.04;
+
 public:
     FFVideo(PlayStatus *playStatus, FFCallJava *callJava);
     ~FFVideo();
@@ -36,6 +42,10 @@ public:
     void play();
 
     void release();
+
+    double getFrameDiffTime(AVFrame *avFrame);
+
+    double getDelayTime(double diff);
 };
 
 

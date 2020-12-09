@@ -107,7 +107,11 @@ public class MRender implements GLSurfaceView.Renderer{
         GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         //清除颜色缓冲,防止缓冲区中原有的颜色信息影响本次绘图
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+
         renderYUV();
+
+        // 图形绘制
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     }
 
     private void initRenderYUV() {
@@ -116,9 +120,11 @@ public class MRender implements GLSurfaceView.Renderer{
         String fragmentSource = SharderUtil.readRawTxt(context, R.raw.fragment_yuv);
         program_yuv = SharderUtil.createProgram(vertexSource, fragmentSource);
 
+        //获取着色器程序中，指定为attribute类型变量的id。
         avPosition_yuv = GLES20.glGetAttribLocation(program_yuv, "av_Position");
         afPosition_yuv = GLES20.glGetAttribLocation(program_yuv, "af_Position");
 
+        //获取着色器程序中，指定为uniform类型变量的id。
         sampler_y = GLES20.glGetUniformLocation(program_yuv, "sampler_y");
         sampler_u = GLES20.glGetUniformLocation(program_yuv, "sampler_u");
         sampler_v = GLES20.glGetUniformLocation(program_yuv, "sampler_v");
@@ -155,6 +161,7 @@ public class MRender implements GLSurfaceView.Renderer{
             GLES20.glEnableVertexAttribArray(afPosition_yuv);
             GLES20.glVertexAttribPointer(afPosition_yuv, 2, GLES20.GL_FLOAT, false, 8, textureBuffer);
 
+            // 绑定纹理
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId_yuv[0]);
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, width_yuv, height_yuv, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, y);
@@ -177,8 +184,6 @@ public class MRender implements GLSurfaceView.Renderer{
             y = null;
             u = null;
             v = null;
-
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         }
     }
 }

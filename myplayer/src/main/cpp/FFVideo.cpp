@@ -15,6 +15,7 @@ FFVideo::~FFVideo() {
 }
 
 void *playVideo(void *data){
+
     LOGI("FFVideo::playVideo");
     FFVideo *video = static_cast<FFVideo *>(data);
     while (video->playstatus != NULL && !video->playstatus->exit){
@@ -47,8 +48,10 @@ void *playVideo(void *data){
             continue;
         }
 
-        if (avcodec_send_packet(video->avCodecContext, avPacket) != 0){
-            LOGE("avcodec_send_packet error!");
+        //发送数据到ffmepg，放到解码队列中
+        int res = avcodec_send_packet(video->avCodecContext, avPacket);
+        if (res != 0){
+            LOGE("avcodec_send_packet error %d!", res);
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
@@ -56,8 +59,11 @@ void *playVideo(void *data){
         }
 
         AVFrame *avFrame = av_frame_alloc();
-        if (avcodec_receive_frame(video->avCodecContext, avFrame) != 0){
-            LOGE("avcodec_receive_frame error!");
+        // 从解码器中获取1个解码的输出数据
+        res = avcodec_receive_frame(video->avCodecContext, avFrame);
+        if (res != 0){
+            //AVERROR(EAGAIN);
+//            LOGE("avcodec_receive_frame error %d!", res);
             av_frame_free(&avFrame);
             av_free(avFrame);
             avFrame = NULL;
@@ -69,6 +75,11 @@ void *playVideo(void *data){
         //LOGI("解码 video AVframe %dx%d format %d %d %d", avFrame->width, avFrame->height, avFrame->format, avFrame->pict_type, avFrame->pkt_size);
 
         if (avFrame->format == AV_PIX_FMT_YUV420P){
+            double diff = video->getFrameDiffTime(avFrame);
+            double needDelayTime = video->getDelayTime(diff);
+            LOGI("diff is %f, needDelayTime is %f", diff, needDelayTime);
+            av_usleep(needDelayTime * 1000 * 1000);
+
             video->callJava->onCallRenderYUV(
                     avFrame->width,
                     avFrame->height,
@@ -109,6 +120,7 @@ void *playVideo(void *data){
                 av_free(buffer);
                 continue;
             }
+
             sws_scale(
                     swsContext,
                     reinterpret_cast<const uint8_t *const *>(avFrame->data),
@@ -165,4 +177,56 @@ void FFVideo::release() {
     if (callJava != NULL){
         callJava = NULL;
     }
+}
+
+double FFVideo::getFrameDiffTime(AVFrame *avFrame) {
+
+    double pts = av_frame_get_best_effort_timestamp(avFrame);
+    //LOGI("getFrameDiffTime pts %f time_base %d %d", pts, time_base.num, time_base.den);
+    if (pts == AV_NOPTS_VALUE){
+        pts = 0;
+    }
+
+    pts *= av_q2d(time_base);
+    if(pts > 0){
+        clock = pts;
+//        LOGI("video frame pts %f, audio %f", pts, audio->clock);
+    }
+
+    double diff = audio->clock - clock;
+    return diff;
+}
+
+double FFVideo::getDelayTime(double diff) {
+    if (diff > 0.003){
+        //音频快
+        delayTime = delayTime * 2 / 3;
+        if(delayTime < defaultDelayTime / 2){
+            delayTime = defaultDelayTime * 2 / 3;
+        }else if(delayTime > defaultDelayTime * 2){
+            delayTime = defaultDelayTime * 2;
+        }
+    } else if(diff < - 0.003){
+        //视频快
+        delayTime = delayTime * 3 / 2;
+        if(delayTime < defaultDelayTime / 2){
+            delayTime = defaultDelayTime * 2 / 3;
+        }
+        else if(delayTime > defaultDelayTime * 2){
+            delayTime = defaultDelayTime * 2;
+        }
+    }else if(diff == 0.003){
+
+    }
+
+    if(diff >= 0.5){
+        delayTime = 0;
+    }else if(diff <= -0.5){
+        delayTime = defaultDelayTime * 2;
+    }
+
+    if(fabs(diff) >= 10){
+        delayTime = defaultDelayTime;
+    }
+    return delayTime;
 }
