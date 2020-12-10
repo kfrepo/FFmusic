@@ -26,6 +26,8 @@ public:
     PlayStatus *playstatus = NULL;
     FFCallJava *callJava = NULL;
 
+    pthread_mutex_t codecMutex;
+
     AVRational time_base;//时基。通过该值可以把PTS，DTS转化为真正的时间 PTS*time_base=真正的时间
 
     pthread_t thread_playvideo;

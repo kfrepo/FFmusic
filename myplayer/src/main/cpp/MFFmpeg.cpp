@@ -90,8 +90,9 @@ void MFFmpeg::decodeFFmpegThread() {
                 duration = audio->duration;
 
                 //av_q2d(time_base)=每个刻度是多少秒
-                LOGI("audio stream_info %d, duration:%d, time_base den:%d, sample_rate:%d",
+                LOGI("audio stream_info[%d], duration:%d, time_base den:%d, sample_rate:%d",
                         i, audio->duration, audio->time_base.den, pAVFormatCtx->streams[i]->codecpar->sample_rate);
+                LOGI("audio stream_info[%d], duration %lld", i, pAVFormatCtx->duration);
             }
         } else if (pAVFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO){
             //得到视频流
@@ -103,12 +104,12 @@ void MFFmpeg::decodeFFmpegThread() {
 
                 int num = pAVFormatCtx->streams[i]->avg_frame_rate.num;
                 int den = pAVFormatCtx->streams[i]->avg_frame_rate.den;
-                LOGI("video stream_info frame_rate num %d,den %d", num, den);
+                LOGI("video stream_info[%d], frame_rate num %d,den %d", i, num, den);
                 if(num != 0 && den != 0){
                     int fps = num / den;//[25 / 1]
                     video->defaultDelayTime = 1.0 / fps;
                 }
-                LOGI("video stream_info %d, defaultDelayTime is %f", i, video->defaultDelayTime);
+                LOGI("video stream_info[%d], defaultDelayTime is %f", i, video->defaultDelayTime);
             }
         }
     }
@@ -257,7 +258,7 @@ void MFFmpeg::start() {
             if(avPacket->stream_index == audio->streamIndex){
 
                 //LOGI("audio 解码第 %d 帧  DTS:%lld PTS:%lld", count, avPacket->dts, avPacket->pts);
-                count++;
+//                count++;
                 audio->queue->putAVpacket(avPacket);
             } else if(avPacket->stream_index == video->streamIndex){
 
@@ -295,12 +296,19 @@ void MFFmpeg::start() {
 }
 
 void MFFmpeg::pause() {
+
+    if (playstatus != NULL){
+        playstatus->pause = true;
+    }
     if(audio != NULL){
         audio->pause();
     }
 }
 
 void MFFmpeg::resume() {
+    if (playstatus != NULL){
+        playstatus->pause = false;
+    }
     if(audio != NULL){
         audio->resume();
     }
@@ -362,27 +370,34 @@ void MFFmpeg::release() {
 }
 
 void MFFmpeg::seek(int64_t seconds) {
-
+    LOGI("MFFmpeg::seek %lld", seconds);
     if (duration <= 0){
         return;
     }
     if (seconds >= 0 && seconds <= duration){
+        playstatus->seek = true;
+        pthread_mutex_lock(&seek_mutex);
+        int64_t rel = seconds * AV_TIME_BASE;
+        avformat_seek_file(pAVFormatCtx, -1, INT64_MIN, rel, INT64_MAX, 0);
+
         if (audio != NULL){
-            playstatus->seek = true;
             audio->queue->clearAvpacket();
             audio->clock = 0;
-            audio->last_tiem = 0;
-            pthread_mutex_lock(&seek_mutex);
-            int64_t rel = seconds * AV_TIME_BASE;
-
-            //时间基转换公式
-            //timestamp(ffmpeg内部时间戳) = AV_TIME_BASE * time(秒)
-            //time(秒) = AV_TIME_BASE_Q * timestamp(ffmpeg内部时间戳)
-            //要seek的时间点，以time_base或者AV_TIME_BASE为单位
-            avformat_seek_file(pAVFormatCtx, -1, INT64_MIN, rel, INT64_MAX, 0);
-            pthread_mutex_unlock(&seek_mutex);
-            playstatus->seek = false;
+            audio->last_time = 0;
+            pthread_mutex_lock(&audio->codecMutex);
+            avcodec_flush_buffers(audio->avCodecContext);
+            pthread_mutex_unlock(&audio->codecMutex);
         }
+
+        if (video != NULL){
+            video->queue->clearAvpacket();
+            video->clock = 0;
+            pthread_mutex_lock(&video->codecMutex);
+            avcodec_flush_buffers(video->avCodecContext);
+            pthread_mutex_unlock(&video->codecMutex);
+        }
+        pthread_mutex_unlock(&seek_mutex);
+        playstatus->seek = false;
     }
 }
 

@@ -10,3 +10,5 @@
 
 #define LOGI(FORMAT,...) if(LOG_DEBUG)__android_log_print(ANDROID_LOG_INFO, "native",FORMAT, ##__VA_ARGS__);
 #define LOGE(FORMAT,...) if(LOG_DEBUG)__android_log_print(ANDROID_LOG_ERROR, "native",FORMAT, ##__VA_ARGS__);
+
+#define LOGIT(TAG, FORMAT, ...) if(LOG_DEBUG)__android_log_print(ANDROID_LOG_INFO, TAG, FORMAT, ##__VA_ARGS__);

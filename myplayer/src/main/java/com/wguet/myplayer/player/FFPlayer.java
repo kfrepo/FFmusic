@@ -4,7 +4,6 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.wguet.myplayer.TimeInfoBean;
 import com.wguet.myplayer.listener.FFOnCompleteListener;
@@ -223,7 +222,7 @@ public class FFPlayer {
 
     public void onCallLoad(boolean load) {
         if(ffOnLoadListener != null) {
-            LogUtil.d(TAG, "JNI 回调 onCallLoad load:" + load);
+            //LogUtil.d(TAG, "JNI 回调 onCallLoad load:" + load);
             ffOnLoadListener.onLoad(load);
         }
     }

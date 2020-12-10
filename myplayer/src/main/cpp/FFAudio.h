@@ -47,7 +47,7 @@ public:
     AVRational time_base;
     double clock = 0;//总的播放时长
     double now_time = 0;//当前frame时间
-    double last_tiem = 0; //上一次调用时间
+    double last_time = 0; //上一次调用时间
 
     float pitch = 1.0f;
     float speed = 1.0f;
@@ -84,6 +84,8 @@ public:
     pthread_t pcmCallBackThread;
     FFBufferQueue *bufferQueue = NULL;
     int defaultPcmSize = 4096;
+
+    pthread_mutex_t codecMutex;
 
 public:
     FFAudio(PlayStatus *playStatus, int sample_rate, FFCallJava *callJava);

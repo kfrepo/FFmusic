@@ -1,5 +1,7 @@
 package com.wguet.ffmusic;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -42,13 +44,12 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
+    private String url = "http://vfx.mtime.cn/Video/2019/03/21/mp4/190321153853126488.mp4";
+
     private FFPlayer ffPlayer;
 
-    private Button btStartPlay;
-    private Button btPause;
-    private Button btResume;
-    private Button btStop;
-    private Button btNext;
+    private Button btStartPlay, btPause, btResume, btStop, btNext, btSelectFile;
+    private TextView urlTv;
 
     private Button btFinish;
     private TextView tvPlayTime;
@@ -86,19 +87,22 @@ public class MainActivity extends AppCompatActivity {
 
         myHandler = new MyHandler(this);
 
-        PermissionUtils.isGrantExternalRW(this, 1001);
+        PermissionUtils.isGrantExternalRW(this, 999);
     }
 
 
     private void initView() {
 
-        btStartPlay = (Button) findViewById(R.id.bt_start);
-        btPause = (Button) findViewById(R.id.bt_pause);
-        btResume = (Button) findViewById(R.id.bt_resume);
-        btStop = (Button) findViewById(R.id.bt_stop);
-        btFinish= (Button) findViewById(R.id.bt_finish);
-        tvPlayTime = (TextView) findViewById(R.id.tv_playtime);
-        btNext = (Button) findViewById(R.id.bt_next);
+        btSelectFile = findViewById(R.id.select_file_bt);
+        btStartPlay = findViewById(R.id.bt_start);
+        btPause = findViewById(R.id.bt_pause);
+        btResume = findViewById(R.id.bt_resume);
+        btStop = findViewById(R.id.bt_stop);
+        btFinish = findViewById(R.id.bt_finish);
+        tvPlayTime = findViewById(R.id.tv_playtime);
+        btNext = findViewById(R.id.bt_next);
+        urlTv = findViewById(R.id.url_tv);
+        urlTv.setText(url);
 
         timeSeek = findViewById(R.id.audio_seek_sb);
 
@@ -121,8 +125,10 @@ public class MainActivity extends AppCompatActivity {
         btStartPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
-                ffPlayer.setSource("/storage/emulated/0/720p.mp4");
+//                ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
+                ffPlayer.setSource("/storage/838E-1A10/DCIM/video/190321153853126488.mp4");
+                urlTv.setText(url);
+//                ffPlayer.setSource("/storage/emulated/0/gnzw720.webm");
                 ffPlayer.prepared();
             }
         });
@@ -160,7 +166,10 @@ public class MainActivity extends AppCompatActivity {
         btNext.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                ffPlayer.playNext("http://ngcdn001.cnr.cn/live/zgzs/index.m3u8");
+//                ffPlayer.playNext("http://ngcdn001.cnr.cn/live/zgzs/index.m3u8");
+//                ffPlayer.playNext("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
+                ffPlayer.playNext("http://vfx.mtime.cn/Video/2019/02/04/mp4/190204084208765161.mp4");
+
             }
         });
 
@@ -254,6 +263,45 @@ public class MainActivity extends AppCompatActivity {
                 ffPlayer.audioStopRecord();
             }
         });
+
+        btSelectFile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new  Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType( "video/*" );
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+                try  {
+                    startActivityForResult( Intent.createChooser(intent, "选择播放文件" ), 19);
+                } catch  (android.content.ActivityNotFoundException ex) {
+                    LogUtil.e(TAG, "Please install a File Manager.");
+                }
+            }
+        });
+
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)  {
+        switch  (requestCode) {
+            case  19:{
+                if  (resultCode == RESULT_OK) {
+                    Uri uri = data.getData();
+                    try {
+                        String path = FileUtils.getImageAbsolutePath(this, uri);
+                        url = path;
+                        urlTv.setText(url);
+                        LogUtil.d(TAG, uri + " path:" +  path);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            break ;
+            default:
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
 
@@ -273,9 +321,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLoad(boolean load) {
                 if(load) {
-                    LogUtil.d(TAG, "LoadListener 加载中...");
+                    //LogUtil.d(TAG, "LoadListener 加载中...");
                 } else {
-                    LogUtil.d(TAG, "LoadListener 播放中...");
+                    //LogUtil.d(TAG, "LoadListener 播放中...");
                 }
             }
         });
@@ -362,13 +410,13 @@ public class MainActivity extends AppCompatActivity {
                     activity.timeSeek.setProgress(progress);
                     break;
                 }
+                case 2:{
+
+                }
                 default:{
                     break;
                 }
             }
         }
     }
-
-
-
 }

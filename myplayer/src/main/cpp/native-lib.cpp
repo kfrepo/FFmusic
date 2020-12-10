@@ -147,7 +147,6 @@ Java_com_wguet_myplayer_player_FFPlayer_jniPause(JNIEnv *env, jobject instance) 
     if(mFFmpeg != NULL){
         mFFmpeg->pause();
     }
-
 }
 
 extern "C"

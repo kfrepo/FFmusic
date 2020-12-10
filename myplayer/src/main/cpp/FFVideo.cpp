@@ -8,10 +8,11 @@ FFVideo::FFVideo(PlayStatus *playStatus, FFCallJava *callJava) {
     this->playstatus = playStatus;
     this->callJava = callJava;
     queue = new AVPacketQueue(playStatus);
+    pthread_mutex_init(&codecMutex, NULL);
 }
 
 FFVideo::~FFVideo() {
-
+    pthread_mutex_destroy(&codecMutex);
 }
 
 void *playVideo(void *data){
@@ -19,7 +20,12 @@ void *playVideo(void *data){
     LOGI("FFVideo::playVideo");
     FFVideo *video = static_cast<FFVideo *>(data);
     while (video->playstatus != NULL && !video->playstatus->exit){
+
         if (video->playstatus->seek){
+            av_usleep(1000 * 100);
+            continue;
+        }
+        if (video->playstatus->pause){
             av_usleep(1000 * 100);
             continue;
         }
@@ -39,15 +45,17 @@ void *playVideo(void *data){
             }
         }
 
-        AVPacket  *avPacket = av_packet_alloc();
+        AVPacket *avPacket = av_packet_alloc();
         //解码渲染
         if (video->queue->popAVpacket(avPacket) != 0){
+            LOGE("FFVideo video->queue->popAVpacket(avPacket) error");
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
             continue;
         }
 
+        pthread_mutex_lock(&video->codecMutex);
         //发送数据到ffmepg，放到解码队列中
         int res = avcodec_send_packet(video->avCodecContext, avPacket);
         if (res != 0){
@@ -55,6 +63,7 @@ void *playVideo(void *data){
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
+            pthread_mutex_unlock(&video->codecMutex);
             continue;
         }
 
@@ -63,13 +72,14 @@ void *playVideo(void *data){
         res = avcodec_receive_frame(video->avCodecContext, avFrame);
         if (res != 0){
             //AVERROR(EAGAIN);
-//            LOGE("avcodec_receive_frame error %d!", res);
+            LOGE("avcodec_receive_frame error %d!", res);
             av_frame_free(&avFrame);
             av_free(avFrame);
             avFrame = NULL;
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
+            pthread_mutex_unlock(&video->codecMutex);
             continue;
         }
         //LOGI("解码 video AVframe %dx%d format %d %d %d", avFrame->width, avFrame->height, avFrame->format, avFrame->pict_type, avFrame->pkt_size);
@@ -77,7 +87,7 @@ void *playVideo(void *data){
         if (avFrame->format == AV_PIX_FMT_YUV420P){
             double diff = video->getFrameDiffTime(avFrame);
             double needDelayTime = video->getDelayTime(diff);
-            LOGI("diff is %f, needDelayTime is %f", diff, needDelayTime);
+//            LOGI("diff is %f, needDelayTime is %f", diff, needDelayTime);
             av_usleep(needDelayTime * 1000 * 1000);
 
             video->callJava->onCallRenderYUV(
@@ -118,6 +128,7 @@ void *playVideo(void *data){
                 av_frame_free(&frameYUV420P);
                 av_free(frameYUV420P);
                 av_free(buffer);
+                pthread_mutex_unlock(&video->codecMutex);
                 continue;
             }
 
@@ -130,6 +141,10 @@ void *playVideo(void *data){
                     frameYUV420P->data,
                     frameYUV420P->linesize
                     );
+            double diff = video->getFrameDiffTime(avFrame);
+            LOGI("convert frameYUV420P diff is %f", diff);
+
+            av_usleep(video->getDelayTime(diff) * 1000 * 1000);
 
             video->callJava->onCallRenderYUV(
                     avFrame->width,
@@ -151,6 +166,7 @@ void *playVideo(void *data){
         av_packet_free(&avPacket);
         av_free(avPacket);
         avPacket = NULL;
+        pthread_mutex_unlock(&video->codecMutex);
     }
     pthread_exit(&video->thread_playvideo);
 }
@@ -166,9 +182,11 @@ void FFVideo::release() {
     }
 
     if (avCodecContext != NULL){
+        pthread_mutex_lock(&codecMutex);
         avcodec_close(avCodecContext);
         avcodec_free_context(&avCodecContext);
         avCodecContext = NULL;
+        pthread_mutex_unlock(&codecMutex);
     }
 
     if (playstatus != NULL){
@@ -190,7 +208,7 @@ double FFVideo::getFrameDiffTime(AVFrame *avFrame) {
     pts *= av_q2d(time_base);
     if(pts > 0){
         clock = pts;
-//        LOGI("video frame pts %f, audio %f", pts, audio->clock);
+//        LOGI("video frame clock %f, audio clock %f", clock, audio->clock);
     }
 
     double diff = audio->clock - clock;

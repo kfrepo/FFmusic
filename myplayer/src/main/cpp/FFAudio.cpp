@@ -12,6 +12,7 @@ FFAudio::FFAudio(PlayStatus *playStatus, int sample_rate, FFCallJava *callJava) 
     this->sample_rate = sample_rate;
     queue = new AVPacketQueue(playstatus);
     buffer = (uint8_t *) av_malloc(sample_rate * 2 * 2);
+    pthread_mutex_init(&codecMutex, NULL);
 
     sampleBuffer = static_cast<SAMPLETYPE *>(malloc(sample_rate * 2 * 2));
     soundTouch = new SoundTouch();
@@ -22,7 +23,7 @@ FFAudio::FFAudio(PlayStatus *playStatus, int sample_rate, FFCallJava *callJava) 
 };
 
 FFAudio::~FFAudio() {
-
+    pthread_mutex_destroy(&codecMutex);
 };
 
 void *decodPlay(void *data){
@@ -123,12 +124,13 @@ int FFAudio::resampleAudio(void **pcmbuf) {
             continue;
         }
 
+        pthread_mutex_lock(&codecMutex);
         ret = avcodec_send_packet(avCodecContext, avPacket);
         if (ret != 0){
-
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
+            pthread_mutex_unlock(&codecMutex);
             continue;
         }
 
@@ -160,10 +162,12 @@ int FFAudio::resampleAudio(void **pcmbuf) {
                 av_packet_free(&avPacket);
                 av_free(avPacket);
                 avPacket = NULL;
+
                 av_frame_free(&avFrame);
                 av_free(avFrame);
                 avFrame = NULL;
                 swr_free(&swr_ctx);
+                pthread_mutex_unlock(&codecMutex);
                 continue;
             }
 
@@ -209,6 +213,7 @@ int FFAudio::resampleAudio(void **pcmbuf) {
 
             swr_free(&swr_ctx);
             swr_ctx = NULL;
+            pthread_mutex_unlock(&codecMutex);
             break;
         } else{
             av_packet_free(&avPacket);
@@ -218,6 +223,7 @@ int FFAudio::resampleAudio(void **pcmbuf) {
             av_frame_free(&avFrame);
             av_free(avFrame);
             avFrame = NULL;
+            pthread_mutex_unlock(&codecMutex);
             continue;
         }
     }
@@ -278,10 +284,10 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context) {
             //假设某通道的音频信号是采样率为8kHz，位宽为16bit，20ms一帧，双通道，则一帧音频数据的大小为： int size = 8000 x 16bit x 0.02s x 2 = 5120 bit = 640 byte
             ffAudio->clock += buffersize / ((double) (ffAudio->sample_rate * 2 * 2));
 
-            //LOGD("FFAudio pcmBufferCallBack clock is %lf, last_tiem is %lf", ffAudio->clock, ffAudio->last_tiem);
-            if(ffAudio->clock - ffAudio->last_tiem >= 0.1) {
+            //LOGI("FFAudio pcmBufferCallBack clock is %lf, last_time is %lf", ffAudio->clock, ffAudio->last_time);
+            if(ffAudio->clock - ffAudio->last_time >= 0.1) {
 
-                ffAudio->last_tiem = ffAudio->clock;
+                ffAudio->last_time = ffAudio->clock;
                 ffAudio->callJava->onCallTimeInfo(CHILD_THREAD, ffAudio->clock, ffAudio->duration);
             }
 
@@ -306,7 +312,7 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void * context) {
 void FFAudio::initOpenSLES() {
 
     SLresult result;
-    LOGI("创建并初始化Audio Engine");
+    LOGI("第一步 opensl 创建并初始化Audio Engine");
     //第一步， 创建并初始化Audio Engine
     result = slCreateEngine(&engineObject, 0, 0, 0, 0, 0);
     // 初始化上一步得到的engineObject
@@ -333,7 +339,6 @@ void FFAudio::initOpenSLES() {
     SLDataLocator_OutputMix outputMix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObject};
     SLDataSink audioSnk = {&outputMix, 0};
 
-
     // 第三步，配置PCM格式信息
     // Buffer Queue的参数
     SLDataLocator_AndroidSimpleBufferQueue android_queue={SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,2};
@@ -350,7 +355,7 @@ void FFAudio::initOpenSLES() {
     // 输出源
     SLDataSource slDataSource = {&android_queue, &pcm};
 
-    LOGI("创建播放器");
+    LOGI("第四步 opensl 创建播放器");
     //第四步，创建播放器
     const SLInterfaceID ids[4] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_PLAYBACKRATE, SL_IID_MUTESOLO};
     const SLboolean req[4] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
@@ -376,7 +381,7 @@ void FFAudio::initOpenSLES() {
     //输出缓冲接口回调
     (*pcmBufferQueue)->RegisterCallback(pcmBufferQueue, pcmBufferCallBack, this);
 
-    LOGI("SetPlayState 播放器 开始播放!");
+    LOGI("opensl 播放器 开始播放!");
     // 获取播放状态接口,设置为播放状态
     (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay, SL_PLAYSTATE_PLAYING);
     pcmBufferCallBack(pcmBufferQueue, this);
@@ -521,7 +526,7 @@ void FFAudio::release() {
 
 void FFAudio::setVolume(int percent) {
 
-    LOGI("FFAudio::setVolume %d", percent);
+    LOGI("设置音量 %d", percent);
     if(pcmVolumePlay != NULL){
         if(percent > 30){
             (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -20);
@@ -546,6 +551,7 @@ void FFAudio::setVolume(int percent) {
 }
 
 void FFAudio::setMute(int mute) {
+    LOGI("音频声道 %d", mute);
     if (pcmMutePlay != NULL){
 
         if (mute == 0){
@@ -565,6 +571,7 @@ void FFAudio::setMute(int mute) {
 }
 
 void FFAudio::setPitch(float pitch) {
+    LOGI("音频变调 %f", pitch);
     this->pitch = pitch;
     if (soundTouch != NULL){
         soundTouch->setPitch(pitch);
@@ -572,6 +579,7 @@ void FFAudio::setPitch(float pitch) {
 }
 
 void FFAudio::setSpeed(float speed) {
+    LOGI("音频变速 %f", speed);
     this->speed = speed;
     if (soundTouch != NULL){
         soundTouch->setTempo(speed);
