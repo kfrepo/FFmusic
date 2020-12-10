@@ -15,6 +15,7 @@ import com.wguet.myplayer.listener.FFOnTimeInfoListener;
 import com.wguet.myplayer.listener.FFOnVolumeDBListener;
 import com.wguet.myplayer.opengl.MGLSurfaceView;
 import com.wguet.myplayer.util.LogUtil;
+import com.wguet.myplayer.util.VideoSupportUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -271,6 +272,10 @@ public class FFPlayer {
         if (mglSurfaceView != null){
             mglSurfaceView.setYUVData(width, height, y, u, v);
         }
+    }
+
+    public boolean onCallIsSupportMediaCodec(String codecName) {
+        return VideoSupportUtil.isSupportCodec(codecName);
     }
 
     private native void jniPrepared(String source);

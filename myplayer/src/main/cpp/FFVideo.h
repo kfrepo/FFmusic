@@ -9,6 +9,9 @@
 #include "FFCallJava.h"
 #include "FFAudio.h"
 
+#define CODEC_YUV 0
+#define CODEC_MEDIACODEC 1
+
 extern "C"{
 #include <libavcodec/avcodec.h>
 #include <libavutil/time.h>
@@ -36,6 +39,8 @@ public:
     double clock = 0;
     double delayTime = 0;
     double defaultDelayTime = 0.04;
+
+    int codectype = CODEC_YUV;
 
 public:
     FFVideo(PlayStatus *playStatus, FFCallJava *callJava);

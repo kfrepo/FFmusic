@@ -225,15 +225,22 @@ void MFFmpeg::start() {
         callJava->onCallError(CHILD_THREAD, 1006, "audio is null!");
         return;
     }
-    LOGI("MFFmpeg::start()!");
-
     if(video == NULL){
         LOGE("video is null!");
         return;
     }
 
+    supportMediaCodec = false;
+    LOGI("MFFmpeg::start()!");
     video->audio = audio;
 
+    const char* codecName = ((const AVCodec*) video->avCodecContext->codec)->name;
+    if (supportMediaCodec = callJava->onCallIsSupportMediaCodec(codecName)){
+        LOGE("当前设备支持硬解码当前视频 %s", codecName);
+    }
+    if(supportMediaCodec){
+        video->codectype = CODEC_MEDIACODEC;
+    }
     audio->play();
     video->play();
 

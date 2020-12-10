@@ -28,6 +28,7 @@ public:
     jmethodID jmid_valumedb;
     jmethodID jmie_pcmtoaac;
     jmethodID jmid_renderyuv;
+    jmethodID jmid_supportvideo;
 
 public:
     FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job);
@@ -48,6 +49,8 @@ public:
     void onCallPcmToAAc(int type, int size, void *buffer);
 
     void onCallRenderYUV(int width, int height, uint8_t *fy, uint8_t *fu, uint8_t *fv);
+
+    bool onCallIsSupportMediaCodec(const char *codecName);
 };
 
 
