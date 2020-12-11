@@ -29,6 +29,7 @@ import com.wguet.myplayer.opengl.MGLSurfaceView;
 import com.wguet.myplayer.player.FFPlayer;
 import com.wguet.myplayer.util.LogUtil;
 import com.wguet.myplayer.util.TimeUtil;
+import com.wguet.myplayer.util.VideoSupportUtil;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -88,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
         myHandler = new MyHandler(this);
 
         PermissionUtils.isGrantExternalRW(this, 999);
+
+//        VideoSupportUtil.isSupportCodec("");
     }
 
 
@@ -126,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 //                ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
-                ffPlayer.setSource("/storage/838E-1A10/DCIM/video/190321153853126488.mp4");
+                ffPlayer.setSource(url);
                 urlTv.setText(url);
 //                ffPlayer.setSource("/storage/emulated/0/gnzw720.webm");
                 ffPlayer.prepared();

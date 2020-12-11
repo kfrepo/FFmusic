@@ -237,7 +237,45 @@ void MFFmpeg::start() {
     const char* codecName = ((const AVCodec*) video->avCodecContext->codec)->name;
     if (supportMediaCodec = callJava->onCallIsSupportMediaCodec(codecName)){
         LOGE("当前设备支持硬解码当前视频 %s", codecName);
+        if (strcasecmp(codecName, "h264") == 0){
+            //找到相应解码器的过滤器 FLV/MP4/MKV等结构中，h264需要h264_mp4toannexb处理。添加SPS/PPS等信息。
+            bsFilter = av_bsf_get_by_name("h264_mp4toannexb");
+        } else if (strcasecmp(codecName, "h265") == 0){
+            bsFilter = av_bsf_get_by_name("hevc_mp4toannexb");
+        }
+
+        if (bsFilter == NULL){
+            LOGE("bsFilter == NULL");
+            goto end;
+        }
+
+        if (av_bsf_alloc(bsFilter, &video->abs_ctx) != 0){
+            LOGE("初始化过滤器上下文失败 %s", codecName);
+            supportMediaCodec = false;
+            goto end;
+        }
+        if (avcodec_parameters_copy(video->abs_ctx->par_in, video->codecpar) != 0){
+            LOGE("添加解码器属性失败 %s", codecName);
+            supportMediaCodec = false;
+            av_bsf_free(&video->abs_ctx);
+            video->abs_ctx = NULL;
+            goto end;
+        }
+        if (av_bsf_init(video->abs_ctx) != 0){
+            LOGE("初始化过滤器上下文失败 %s", codecName);
+            supportMediaCodec = false;
+            av_bsf_free(&video->abs_ctx);
+            video->abs_ctx = NULL;
+            goto end;
+        }
+        video->abs_ctx->time_base_in = video->time_base;
+    } else{
+        LOGE("当前设备 不支持硬解码当前视频 %s", codecName);
     }
+
+    end:
+        supportMediaCodec = false;
+
     if(supportMediaCodec){
         video->codectype = CODEC_MEDIACODEC;
     }

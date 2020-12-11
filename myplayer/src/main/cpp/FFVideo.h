@@ -42,6 +42,8 @@ public:
 
     int codectype = CODEC_YUV;
 
+    AVBSFContext *abs_ctx = NULL;
+
 public:
     FFVideo(PlayStatus *playStatus, FFCallJava *callJava);
     ~FFVideo();

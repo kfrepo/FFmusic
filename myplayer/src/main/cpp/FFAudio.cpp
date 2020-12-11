@@ -385,7 +385,7 @@ void FFAudio::initOpenSLES() {
     // 获取播放状态接口,设置为播放状态
     (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay, SL_PLAYSTATE_PLAYING);
     pcmBufferCallBack(pcmBufferQueue, this);
-
+    setVolume(1);
 }
 
 

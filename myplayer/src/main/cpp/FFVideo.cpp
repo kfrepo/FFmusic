@@ -56,10 +56,21 @@ void *playVideo(void *data){
         }
 
         if (video->codectype == CODEC_MEDIACODEC){
-            LOGE("video 硬解码视频");
-            av_packet_free(&avPacket);
-            av_free(avPacket);
+            // 硬解码
+            if (av_bsf_send_packet(video->abs_ctx, avPacket) != 0){
+                av_packet_free(&avPacket);
+                av_free(avPacket);
+                avPacket = NULL;
+                continue;
+            }
+            while (av_bsf_receive_packet(video->abs_ctx, avPacket) == 0){
+                LOGI("video 硬解码 开始解码");
+                av_packet_free(&avPacket);
+                av_free(avPacket);
+                continue;
+            }
             avPacket = NULL;
+
         } else if (video->codectype == CODEC_YUV){
 
             pthread_mutex_lock(&video->codecMutex);
@@ -190,7 +201,10 @@ void FFVideo::release() {
         delete(queue);
         queue = NULL;
     }
-
+    if(abs_ctx != NULL){
+        av_bsf_free(&abs_ctx);
+        abs_ctx = NULL;
+    }
     if (avCodecContext != NULL){
         pthread_mutex_lock(&codecMutex);
         avcodec_close(avCodecContext);

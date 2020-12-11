@@ -31,7 +31,7 @@ public class VideoSupportUtil {
         int count = MediaCodecList.getCodecCount();
         for (int i = 0; i < count; i++){
             String[] types = MediaCodecList.getCodecInfoAt(i).getSupportedTypes();
-            LogUtil.d("VideoSupportUtil", Arrays.toString(types));
+//            LogUtil.d("VideoSupportUtil", Arrays.toString(types));
             for (int j = 0; j < types.length; j++){
                 if (types[j].equals(findVideoCodecName(codecname))){
                     supportvideo = true;
