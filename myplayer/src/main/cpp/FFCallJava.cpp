@@ -29,6 +29,8 @@ FFCallJava::FFCallJava(_JavaVM *javaVM, JNIEnv *env, jobject *job) {
     jmie_pcmtoaac = env->GetMethodID(jlz, "encodecPcmToAAc", "(I[B)V");
     jmid_renderyuv = env->GetMethodID(jlz, "onCallRenderYUV", "(II[B[B[B)V");
     jmid_supportvideo = env->GetMethodID(jlz, "onCallIsSupportMediaCodec", "(Ljava/lang/String;)Z");
+    jmid_initmediacodec = env->GetMethodID(jlz, "initMediaCodec", "(Ljava/lang/String;II[B[B)V");
+    jmid_decodeavpacket = env->GetMethodID(jlz, "decodeAVPacket", "(I[B)V");
 }
 
 FFCallJava::~FFCallJava() {
@@ -198,7 +200,40 @@ bool FFCallJava::onCallIsSupportMediaCodec(const char *codecName) {
 
     jstring type = jniEnv->NewStringUTF(codecName);
     support = jniEnv->CallBooleanMethod(jobj, jmid_supportvideo, type);
+    LOGE("onCallIsSupportMediaCodec %d", support);
     jniEnv->DeleteLocalRef(type);
     javaVM->DetachCurrentThread();
     return support;
+}
+
+void FFCallJava::onCallInitMediacodec(const char *mime, int width, int height, int csd0_size,
+                                      int csd1_size, uint8_t *csd_0, uint8_t *csd_1) {
+    JNIEnv *jniEnv;
+    if (javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK){
+        LOGE("call onCallInitMediacodec worng");
+    }
+    jstring type = jniEnv->NewStringUTF(mime);
+    jbyteArray csd0 = jniEnv->NewByteArray(csd0_size);
+    jniEnv->SetByteArrayRegion(csd0, 0, csd0_size, reinterpret_cast<const jbyte *>(csd_0));
+    jbyteArray csd1 = jniEnv->NewByteArray(csd1_size);
+    jniEnv->SetByteArrayRegion(csd1, 0, csd1_size, reinterpret_cast<const jbyte *>(csd_1));
+
+    jniEnv->CallVoidMethod(jobj, jmid_initmediacodec, type, width, height, csd0, csd1);
+
+    jniEnv->DeleteLocalRef(csd0);
+    jniEnv->DeleteLocalRef(csd1);
+    jniEnv->DeleteLocalRef(type);
+    javaVM->DetachCurrentThread();
+}
+
+void FFCallJava::onCallDecodeAVPacket(int datasize, uint8_t *packetdata) {
+    JNIEnv *jniEnv;
+    if (javaVM->AttachCurrentThread(&jniEnv, 0) != JNI_OK){
+        LOGE("call onCallInitMediacodec worng");
+    }
+    jbyteArray data = jniEnv->NewByteArray(datasize);
+    jniEnv->SetByteArrayRegion(data, 0, datasize, reinterpret_cast<const jbyte *>(packetdata));
+    jniEnv->CallVoidMethod(jobj, jmid_decodeavpacket, datasize, data);
+    jniEnv->DeleteLocalRef(data);
+    javaVM->DetachCurrentThread();
 }

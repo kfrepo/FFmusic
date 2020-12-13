@@ -236,10 +236,11 @@ void MFFmpeg::start() {
 
     const char* codecName = ((const AVCodec*) video->avCodecContext->codec)->name;
     if (supportMediaCodec = callJava->onCallIsSupportMediaCodec(codecName)){
-        LOGE("当前设备支持硬解码当前视频 %s", codecName);
+        LOGE("当前设备支持硬解码当前视频 %s %d", codecName, supportMediaCodec);
         if (strcasecmp(codecName, "h264") == 0){
             //找到相应解码器的过滤器 FLV/MP4/MKV等结构中，h264需要h264_mp4toannexb处理。添加SPS/PPS等信息。
             bsFilter = av_bsf_get_by_name("h264_mp4toannexb");
+            LOGE("av_bsf_get_by_name h264_mp4toannexb");
         } else if (strcasecmp(codecName, "h265") == 0){
             bsFilter = av_bsf_get_by_name("hevc_mp4toannexb");
         }
@@ -269,15 +270,28 @@ void MFFmpeg::start() {
             goto end;
         }
         video->abs_ctx->time_base_in = video->time_base;
+        LOGE("video->abs_ctx->time_base_in = video->time_base;");
     } else{
         LOGE("当前设备 不支持硬解码当前视频 %s", codecName);
     }
 
-    end:
-        supportMediaCodec = false;
+    end:{
+        LOGE("supportMediaCodec set false");
+//        supportMediaCodec = false;
+    };
 
     if(supportMediaCodec){
         video->codectype = CODEC_MEDIACODEC;
+        LOGI("video->callJava->onCallInitMediacodec %d %d", video->avCodecContext->width, video->avCodecContext->height);
+        video->callJava->onCallInitMediacodec(
+                codecName,
+                video->avCodecContext->width,
+                video->avCodecContext->height,
+                video->avCodecContext->extradata_size,
+                video->avCodecContext->extradata_size,
+                video->avCodecContext->extradata,
+                video->avCodecContext->extradata
+        );
     }
     audio->play();
     video->play();

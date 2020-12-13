@@ -64,7 +64,11 @@ void *playVideo(void *data){
                 continue;
             }
             while (av_bsf_receive_packet(video->abs_ctx, avPacket) == 0){
-                LOGI("video 硬解码 开始解码");
+
+                double  diff = video->getFrameDiffTime(NULL, avPacket);
+                LOGI("硬解码 diff is %f", diff);
+                av_usleep(video->getDelayTime(diff) * 1000 * 1000);
+                video->callJava->onCallDecodeAVPacket(avPacket->size, avPacket->data);
                 av_packet_free(&avPacket);
                 av_free(avPacket);
                 continue;
@@ -103,9 +107,9 @@ void *playVideo(void *data){
             //LOGI("解码 video AVframe %dx%d format %d %d %d", avFrame->width, avFrame->height, avFrame->format, avFrame->pict_type, avFrame->pkt_size);
 
             if (avFrame->format == AV_PIX_FMT_YUV420P){
-                double diff = video->getFrameDiffTime(avFrame);
+                double diff = video->getFrameDiffTime(avFrame, NULL);
                 double needDelayTime = video->getDelayTime(diff);
-//            LOGI("diff is %f, needDelayTime is %f", diff, needDelayTime);
+                //LOGI("diff is %f, needDelayTime is %f", diff, needDelayTime);
                 av_usleep(needDelayTime * 1000 * 1000);
 
                 video->callJava->onCallRenderYUV(
@@ -159,7 +163,7 @@ void *playVideo(void *data){
                         frameYUV420P->data,
                         frameYUV420P->linesize
                 );
-                double diff = video->getFrameDiffTime(avFrame);
+                double diff = video->getFrameDiffTime(avFrame, NULL);
                 LOGI("convert frameYUV420P diff is %f", diff);
 
                 av_usleep(video->getDelayTime(diff) * 1000 * 1000);
@@ -221,9 +225,14 @@ void FFVideo::release() {
     }
 }
 
-double FFVideo::getFrameDiffTime(AVFrame *avFrame) {
-
-    double pts = av_frame_get_best_effort_timestamp(avFrame);
+double FFVideo::getFrameDiffTime(AVFrame *avFrame, AVPacket *avPacket) {
+    double pts = 0;
+    if (avFrame != NULL){
+        pts = av_frame_get_best_effort_timestamp(avFrame);
+    }
+    if (avPacket != NULL){
+        pts = avPacket->pts;
+    }
     //LOGI("getFrameDiffTime pts %f time_base %d %d", pts, time_base.num, time_base.den);
     if (pts == AV_NOPTS_VALUE){
         pts = 0;

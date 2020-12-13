@@ -4,6 +4,7 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.text.TextUtils;
+import android.view.Surface;
 
 import com.wguet.myplayer.TimeInfoBean;
 import com.wguet.myplayer.listener.FFOnCompleteListener;
@@ -461,5 +462,57 @@ public class FFPlayer {
                 outputStream = null;
             }
         }
+    }
+
+    private MediaFormat mediaFormat;
+    private MediaCodec mediaCodec;
+    private Surface surface;
+    private MediaCodec.BufferInfo videoInfo;
+    public void initMediaCodec(String codecName, int width, int height, byte[] csd_0, byte[] csd_1){
+        if (mglSurfaceView != null){
+
+            try {
+                String mime = VideoSupportUtil.findVideoCodecName(codecName);
+                LogUtil.d(TAG, "initMediaCodec mime=" + mime);
+
+                mediaFormat = MediaFormat.createVideoFormat(mime, width, height);
+                mediaFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, width*height);
+                mediaFormat.setByteBuffer("csd_0", ByteBuffer.wrap(csd_0));
+                mediaFormat.setByteBuffer("csd_1", ByteBuffer.wrap(csd_1));
+                LogUtil.d(TAG, "mediaFormat=" + mediaFormat.toString());
+
+                mediaCodec = MediaCodec.createDecoderByType(mime);
+
+                mediaCodec.configure(mediaFormat, surface, null, 0);
+                mediaCodec.start();
+                LogUtil.d(TAG, "initMediaCodec mediaCodec start!");
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        } else {
+            if(ffOnErrorListener != null) {
+                ffOnErrorListener.onError(2001, "surface is null");
+            }
+        }
+
+    }
+
+    public void decodeAVPacket(int datasize, byte[] data){
+        LogUtil.d(TAG, "decodeAVPacket datasize=" + datasize);
+        if(surface != null && datasize > 0 && data != null){
+            int intputBufferIndex = mediaCodec.dequeueInputBuffer(10);
+            if(intputBufferIndex >= 0) {
+                ByteBuffer byteBuffer = mediaCodec.getOutputBuffers()[intputBufferIndex];
+                byteBuffer.clear();
+                byteBuffer.put(data);
+                mediaCodec.queueInputBuffer(intputBufferIndex, 0, datasize, 0, 0);
+            }
+            int outputBufferIndex = mediaCodec.dequeueOutputBuffer(info, 10);
+            while(outputBufferIndex >= 0) {
+                mediaCodec.releaseOutputBuffer(outputBufferIndex, true);
+                outputBufferIndex = mediaCodec.dequeueOutputBuffer(info, 10);
+            }
+        }
+
     }
 }
