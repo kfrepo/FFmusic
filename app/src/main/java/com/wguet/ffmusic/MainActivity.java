@@ -45,8 +45,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    private String url = "http://vfx.mtime.cn/Video/2019/03/21/mp4/190321153853126488.mp4";
-
+//    private String url = "http://vfx.mtime.cn/Video/2019/03/21/mp4/190321153853126488.mp4";
+    private String url = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
     private FFPlayer ffPlayer;
 
     private Button btStartPlay, btPause, btResume, btStop, btNext, btSelectFile;

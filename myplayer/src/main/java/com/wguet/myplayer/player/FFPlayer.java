@@ -99,6 +99,7 @@ public class FFPlayer {
             @Override
             public void run() {
                 LogUtil.e(TAG,"prepared call jniPrepared " + source);
+                jniStop();
                 jniPrepared(source);
             }
         }).start();

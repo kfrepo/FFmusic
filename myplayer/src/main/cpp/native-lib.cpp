@@ -174,7 +174,7 @@ Java_com_wguet_myplayer_player_FFPlayer_jniStop(JNIEnv *env, jobject instance) {
 
     nexit = false;
     if (mFFmpeg) {
-
+        LOGI("jniStop mFFmpeg->release()");
         mFFmpeg->release();
         pthread_join(thread_start, NULL);
         delete(mFFmpeg);

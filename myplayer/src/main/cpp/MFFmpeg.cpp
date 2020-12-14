@@ -275,7 +275,7 @@ void MFFmpeg::start() {
     } else{
         LOGE("当前设备 不支持硬解码当前视频 %s", codecName);
     }
-
+    
     if(supportMediaCodec){
         video->codectype = CODEC_MEDIACODEC;
         LOGI("video->callJava->onCallInitMediacodec %d %d", video->avCodecContext->width, video->avCodecContext->height);

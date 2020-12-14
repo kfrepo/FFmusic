@@ -244,6 +244,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/sound_pitch_ll"
             android:layout_marginTop="10dp"
+            android:visibility="gone"
             android:orientation="horizontal">
 
             <Button
