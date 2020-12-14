@@ -66,7 +66,7 @@ void *playVideo(void *data){
             while (av_bsf_receive_packet(video->abs_ctx, avPacket) == 0){
 
                 double  diff = video->getFrameDiffTime(NULL, avPacket);
-                LOGI("硬解码 diff is %f", diff);
+                //LOGI("硬解码 diff is %f", diff);
                 av_usleep(video->getDelayTime(diff) * 1000 * 1000);
                 video->callJava->onCallDecodeAVPacket(avPacket->size, avPacket->data);
                 av_packet_free(&avPacket);
@@ -93,7 +93,7 @@ void *playVideo(void *data){
             // 从解码器中获取1个解码的输出数据
             res = avcodec_receive_frame(video->avCodecContext, avFrame);
             if (res != 0){
-                //AVERROR(EAGAIN);
+                //AVERROR(EAGAIN); 当前输出无效，用户必须发送新的输入
                 LOGE("avcodec_receive_frame error %d!", res);
                 av_frame_free(&avFrame);
                 av_free(avFrame);
@@ -193,14 +193,24 @@ void *playVideo(void *data){
 
 
     }
-    pthread_exit(&video->thread_playvideo);
+//    pthread_exit(&video->thread_playvideo);
+    return 0;
 }
 
 void FFVideo::play() {
-    pthread_create(&thread_playvideo, NULL, playVideo, this);
+    if (playstatus != NULL && !playstatus->exit){
+        pthread_create(&thread_playvideo, NULL, playVideo, this);
+    }
+
 }
 
 void FFVideo::release() {
+    LOGE("开始释放FFVideo!");
+    if(queue != NULL){
+        queue->noticeQueue();
+    }
+    pthread_join(thread_playvideo, NULL);
+
     if (queue != NULL){
         delete(queue);
         queue = NULL;
@@ -223,6 +233,7 @@ void FFVideo::release() {
     if (callJava != NULL){
         callJava = NULL;
     }
+    LOGE("释放FFVideo成功!");
 }
 
 double FFVideo::getFrameDiffTime(AVFrame *avFrame, AVPacket *avPacket) {

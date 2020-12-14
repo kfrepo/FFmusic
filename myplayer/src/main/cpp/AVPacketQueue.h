@@ -34,6 +34,8 @@ public:
     int getQueueSize();
 
     void clearAvpacket();
+
+    void noticeQueue();
 };
 
 

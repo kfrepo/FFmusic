@@ -28,7 +28,15 @@ public class MGLSurfaceView extends GLSurfaceView {
         setRenderer(mRender);
         //设置渲染方式 只有在创建和调用requestRender()时才会刷新
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+
         LogUtil.d("MGLSurfaceView", "MGLSurfaceView constructed!");
+
+        mRender.setOnRenderListener(new MRender.OnRenderListener() {
+            @Override
+            public void onRender() {
+                requestRender();
+            }
+        });
     }
 
     public void setYUVData(int width, int height, byte[] y, byte[] u, byte[] v) {
@@ -37,5 +45,9 @@ public class MGLSurfaceView extends GLSurfaceView {
             //通过requestRender()方法主动请求重绘
             requestRender();
         }
+    }
+
+    public MRender getMRender() {
+        return mRender;
     }
 }

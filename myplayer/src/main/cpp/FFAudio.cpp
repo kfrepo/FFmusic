@@ -31,7 +31,8 @@ void *decodPlay(void *data){
     FFAudio *ffAudio = (FFAudio *) data;
     LOGI("START initOpenSLES!");
     ffAudio->initOpenSLES();
-    pthread_exit(&ffAudio->thread_play);
+//    pthread_exit(&ffAudio->thread_play);
+    return 0;
 }
 
 void *pcmCallBack(void *data){
@@ -82,9 +83,11 @@ void *pcmCallBack(void *data){
 }
 
 void FFAudio::play(){
-    bufferQueue = new FFBufferQueue(playstatus);
-    pthread_create(&thread_play, NULL, decodPlay, this);
-    pthread_create(&pcmCallBackThread, NULL, pcmCallBack, this);
+    if (playstatus != NULL && !playstatus->exit){
+        bufferQueue = new FFBufferQueue(playstatus);
+        pthread_create(&thread_play, NULL, decodPlay, this);
+        pthread_create(&pcmCallBackThread, NULL, pcmCallBack, this);
+    }
 }
 
 
@@ -457,14 +460,16 @@ void FFAudio::stop() {
 }
 
 void FFAudio::release() {
-
+    LOGE("开始释放FFAudio!");
     if (bufferQueue != NULL){
         bufferQueue->noticeThread();
-        pthread_join(pcmCallBackThread, NULL);
+
         bufferQueue->release();
         delete(bufferQueue);
         bufferQueue = NULL;
     }
+//    pthread_join(pcmCallBackThread, NULL);
+    pthread_join(thread_play, NULL);
 
     if (queue != NULL){
         delete(queue);
@@ -522,6 +527,7 @@ void FFAudio::release() {
     if(callJava != NULL) {
         callJava = NULL;
     }
+    LOGE("释放FFAudio成功!");
 }
 
 void FFAudio::setVolume(int percent) {

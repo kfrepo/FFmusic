@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
         PermissionUtils.isGrantExternalRW(this, 999);
 
-//        VideoSupportUtil.isSupportCodec("");
+        VideoSupportUtil.init();
     }
 
 
@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
 //                ffPlayer.setSource("http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3");
                 ffPlayer.setSource(url);
                 urlTv.setText(url);
-//                ffPlayer.setSource("/storage/emulated/0/gnzw720.webm");
+//                ffPlayer.setSource("/storage/emulated/0/hp8.mp4");
                 ffPlayer.prepared();
             }
         });

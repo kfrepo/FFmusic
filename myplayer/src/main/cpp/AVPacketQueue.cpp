@@ -85,3 +85,7 @@ void AVPacketQueue::clearAvpacket() {
     }
     pthread_mutex_unlock(&mutexPacket);
 }
+
+void AVPacketQueue::noticeQueue() {
+    pthread_cond_signal(&condPacket);
+}

@@ -1,8 +1,11 @@
 package com.wguet.myplayer.opengl;
 
 import android.content.Context;
+import android.graphics.SurfaceTexture;
+import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.view.Surface;
 
 import com.wguet.myplayer.R;
 import com.wguet.myplayer.util.LogUtil;
@@ -21,9 +24,12 @@ import javax.microedition.khronos.opengles.GL10;
  * @author wangmh
  * @date 2020/12/7 20:04
  */
-public class MRender implements GLSurfaceView.Renderer{
+public class MRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener{
 
     private final static String TAG = "MRender";
+
+    public static final int RENDER_YUV = 1;
+    public static final int RENDER_MEDIACODEC = 2;
 
     private Context context;
 
@@ -46,10 +52,13 @@ public class MRender implements GLSurfaceView.Renderer{
 
     private FloatBuffer vertexBuffer;
     private FloatBuffer textureBuffer;
+
+    private int renderType = RENDER_YUV;
+
+    //YUV
     private int program_yuv;
     private int avPosition_yuv;
     private int afPosition_yuv;
-    private int textureid;
 
     private int sampler_y;
     private int sampler_u;
@@ -61,6 +70,18 @@ public class MRender implements GLSurfaceView.Renderer{
     private ByteBuffer y;
     private ByteBuffer u;
     private ByteBuffer v;
+
+    //mediacodec
+    private int program_mediacodec;
+    private int avPosition_mediacodec;
+    private int afPosition_mediacodec;
+    private int samplerOES_mediacodec;
+    private int textureId_mediacodec;
+    private SurfaceTexture surfaceTexture;
+    private Surface surface;
+
+    private OnSurfaceCreateListener onSurfaceCreateListener;
+    private OnRenderListener onRenderListener;
 
     public MRender(Context context){
         this.context = context;
@@ -81,10 +102,24 @@ public class MRender implements GLSurfaceView.Renderer{
         LogUtil.d(TAG, "MRender constructed!");
     }
 
+
+    public void setRenderType(int renderType) {
+        this.renderType = renderType;
+    }
+
+    public void setOnSurfaceCreateListener(OnSurfaceCreateListener onSurfaceCreateListener) {
+        this.onSurfaceCreateListener = onSurfaceCreateListener;
+    }
+
+    public void setOnRenderListener(OnRenderListener onRenderListener) {
+        this.onRenderListener = onRenderListener;
+    }
+
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         LogUtil.d(TAG, "onSurfaceCreated");
         initRenderYUV();
+        initRenderMediacodec();
     }
 
     @Override
@@ -107,11 +142,22 @@ public class MRender implements GLSurfaceView.Renderer{
         GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         //清除颜色缓冲,防止缓冲区中原有的颜色信息影响本次绘图
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-
-        renderYUV();
-
+        if (renderType == RENDER_YUV) {
+            renderYUV();
+        }else if (renderType == RENDER_MEDIACODEC) {
+            renderMediacodec();
+        }
         // 图形绘制
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+    }
+
+    @Override
+    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+        //新的数据帧有效时的回调接口
+        if(onRenderListener != null) {
+            //回调requestRender() 主动请求重绘
+            onRenderListener.onRender();
+        }
     }
 
     private void initRenderYUV() {
@@ -185,5 +231,60 @@ public class MRender implements GLSurfaceView.Renderer{
             u = null;
             v = null;
         }
+    }
+
+    private void initRenderMediacodec() {
+        LogUtil.d(TAG, "initRenderMediacodec!");
+        String vertexSource = SharderUtil.readRawTxt(context, R.raw.vertex_shader);
+        String fragmentSource = SharderUtil.readRawTxt(context, R.raw.fragment_mediacodec);
+        program_mediacodec = SharderUtil.createProgram(vertexSource, fragmentSource);
+
+        avPosition_mediacodec = GLES20.glGetAttribLocation(program_mediacodec, "av_Position");
+        afPosition_mediacodec = GLES20.glGetAttribLocation(program_mediacodec, "af_Position");
+        samplerOES_mediacodec = GLES20.glGetUniformLocation(program_mediacodec, "sTexture");
+
+        int[] textureids = new int[1];
+        GLES20.glGenTextures(1, textureids, 0);
+        textureId_mediacodec = textureids[0];
+
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+
+        surfaceTexture = new SurfaceTexture(textureId_mediacodec);
+        surface = new Surface(surfaceTexture);
+        //从Image Stream中捕获帧数据，用作OpenGLES的纹理，其中Image Stream来自相机预览或视频解码
+        surfaceTexture.setOnFrameAvailableListener(this);
+
+        if(onSurfaceCreateListener != null) {
+            onSurfaceCreateListener.onSurfaceCreate(surface);
+        }
+    }
+
+    private void renderMediacodec() {
+        //当updateTexImage()被调用时，SurfaceTexture对象所关联的OpenGLES中纹理对象的内容将被更新为Image Stream中最新的图片。
+        //SurfaceTexture对象可以在任何线程中创建。updateTexImage()方法只能在包OpenGLES环境的线程里调用，
+        // 即Renderer接口所独立创建的线程当中。一般在onDrawFrame中调用updateTexImage()将数据绑定给OpenGLES对应的纹理对象。
+        surfaceTexture.updateTexImage();
+        GLES20.glUseProgram(program_mediacodec);
+
+        GLES20.glEnableVertexAttribArray(avPosition_mediacodec);
+        GLES20.glVertexAttribPointer(avPosition_mediacodec, 2, GLES20.GL_FLOAT, false, 8, vertexBuffer);
+
+        GLES20.glEnableVertexAttribArray(afPosition_mediacodec);
+        GLES20.glVertexAttribPointer(afPosition_mediacodec, 2, GLES20.GL_FLOAT, false, 8, textureBuffer);
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId_mediacodec);
+        GLES20.glUniform1i(samplerOES_mediacodec, 0);
+    }
+
+    public interface OnSurfaceCreateListener {
+        void onSurfaceCreate(Surface surface);
+    }
+
+    public interface OnRenderListener{
+        void onRender();
     }
 }

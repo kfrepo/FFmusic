@@ -200,7 +200,7 @@ bool FFCallJava::onCallIsSupportMediaCodec(const char *codecName) {
 
     jstring type = jniEnv->NewStringUTF(codecName);
     support = jniEnv->CallBooleanMethod(jobj, jmid_supportvideo, type);
-    LOGE("onCallIsSupportMediaCodec %d", support);
+//    LOGE("onCallIsSupportMediaCodec %s %d", codecName, support);
     jniEnv->DeleteLocalRef(type);
     javaVM->DetachCurrentThread();
     return support;

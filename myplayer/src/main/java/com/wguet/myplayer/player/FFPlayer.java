@@ -15,6 +15,7 @@ import com.wguet.myplayer.listener.FFOnPreparedListener;
 import com.wguet.myplayer.listener.FFOnTimeInfoListener;
 import com.wguet.myplayer.listener.FFOnVolumeDBListener;
 import com.wguet.myplayer.opengl.MGLSurfaceView;
+import com.wguet.myplayer.opengl.MRender;
 import com.wguet.myplayer.util.LogUtil;
 import com.wguet.myplayer.util.VideoSupportUtil;
 
@@ -97,7 +98,7 @@ public class FFPlayer {
         new Thread(new Runnable() {
             @Override
             public void run() {
-
+                LogUtil.e(TAG,"prepared call jniPrepared " + source);
                 jniPrepared(source);
             }
         }).start();
@@ -140,6 +141,7 @@ public class FFPlayer {
             @Override
             public void run() {
                 jniStop();
+                releaseMediacodec();
             }
         }).start();
     }
@@ -202,13 +204,9 @@ public class FFPlayer {
     public void audioStopRecord() {
         if(initMediaCodec) {
             jniStartStopRecord(false);
-            releaseMedicacodec();
-            LogUtil.d(TAG,"完成录制");
+            releaseAudioMediacodec();
+            LogUtil.d(TAG,"音频完成录制！");
         }
-    }
-
-    public void setMGLSurfaceView(MGLSurfaceView surfaceView) {
-        mglSurfaceView = surfaceView;
     }
 
 
@@ -271,6 +269,7 @@ public class FFPlayer {
     public void onCallRenderYUV(int width, int height, byte[] y, byte[] u, byte[] v) {
         //LogUtil.d(TAG, String.format("获取到视频的yuv数据 %dx%d y:%d u:%d v:%d", width, height, y.length, u.length, v.length));
         if (mglSurfaceView != null){
+            mglSurfaceView.getMRender().setRenderType(MRender.RENDER_YUV);
             mglSurfaceView.setYUVData(width, height, y, u, v);
         }
     }
@@ -435,7 +434,7 @@ public class FFPlayer {
         return rate;
     }
 
-    private void releaseMedicacodec() {
+    private void releaseAudioMediacodec() {
         if(encoder == null) {
             return;
         }
@@ -464,14 +463,31 @@ public class FFPlayer {
         }
     }
 
+
+
+    public void setMGLSurfaceView(MGLSurfaceView surfaceView) {
+        mglSurfaceView = surfaceView;
+        LogUtil.d(TAG, "setMGLSurfaceView ! " + mglSurfaceView.getMRender());
+        mglSurfaceView.getMRender().setOnSurfaceCreateListener(new MRender.OnSurfaceCreateListener() {
+            @Override
+            public void onSurfaceCreate(Surface surface) {
+                if(mSurface == null) {
+                    mSurface = surface;
+                    LogUtil.d(TAG, "SurfaceCreateListener callback onSurfaceCreate!" + surface);
+                }
+            }
+        });
+    }
+
     private MediaFormat mediaFormat;
     private MediaCodec mediaCodec;
-    private Surface surface;
+    private Surface mSurface;
     private MediaCodec.BufferInfo videoInfo;
     public void initMediaCodec(String codecName, int width, int height, byte[] csd_0, byte[] csd_1){
-        if (mglSurfaceView != null){
+        if (mSurface != null){
 
             try {
+                mglSurfaceView.getMRender().setRenderType(MRender.RENDER_MEDIACODEC);
                 String mime = VideoSupportUtil.findVideoCodecName(codecName);
                 LogUtil.d(TAG, "initMediaCodec mime=" + mime);
 
@@ -480,39 +496,66 @@ public class FFPlayer {
                 mediaFormat.setByteBuffer("csd_0", ByteBuffer.wrap(csd_0));
                 mediaFormat.setByteBuffer("csd_1", ByteBuffer.wrap(csd_1));
                 LogUtil.d(TAG, "mediaFormat=" + mediaFormat.toString());
-
                 mediaCodec = MediaCodec.createDecoderByType(mime);
 
-                mediaCodec.configure(mediaFormat, surface, null, 0);
+                videoInfo = new MediaCodec.BufferInfo();
+                mediaCodec.configure(mediaFormat, mSurface, null, 0);
                 mediaCodec.start();
-                LogUtil.d(TAG, "initMediaCodec mediaCodec start!");
+                LogUtil.d(TAG, "initMediaCodec mediaCodec and start!");
             }catch (Exception e){
-                e.printStackTrace();
+                LogUtil.e(TAG, e.toString());
             }
         } else {
             if(ffOnErrorListener != null) {
-                ffOnErrorListener.onError(2001, "surface is null");
+                ffOnErrorListener.onError(2001, "mSurface is null");
             }
         }
 
     }
 
     public void decodeAVPacket(int datasize, byte[] data){
-        LogUtil.d(TAG, "decodeAVPacket datasize=" + datasize);
-        if(surface != null && datasize > 0 && data != null){
-            int intputBufferIndex = mediaCodec.dequeueInputBuffer(10);
-            if(intputBufferIndex >= 0) {
-                ByteBuffer byteBuffer = mediaCodec.getOutputBuffers()[intputBufferIndex];
-                byteBuffer.clear();
-                byteBuffer.put(data);
-                mediaCodec.queueInputBuffer(intputBufferIndex, 0, datasize, 0, 0);
-            }
-            int outputBufferIndex = mediaCodec.dequeueOutputBuffer(info, 10);
-            while(outputBufferIndex >= 0) {
-                mediaCodec.releaseOutputBuffer(outputBufferIndex, true);
-                outputBufferIndex = mediaCodec.dequeueOutputBuffer(info, 10);
-            }
-        }
 
+        if(mSurface != null && datasize > 0 && data != null && mediaCodec != null){
+            try {
+                //设置解码等待时间，0为不等待，-1为一直等待，其余为时间单位
+                int intputBufferIndex = mediaCodec.dequeueInputBuffer(10);
+                if(intputBufferIndex >= 0) {
+                    ByteBuffer byteBuffer = mediaCodec.getInputBuffers()[intputBufferIndex];
+                    byteBuffer.clear();
+                    byteBuffer.put(data);
+                    //LogUtil.d(TAG, "decodeAVPacket data size=" + data.length);
+                    mediaCodec.queueInputBuffer(intputBufferIndex, 0, datasize, 0, 0);
+                }
+                int outputBufferIndex = mediaCodec.dequeueOutputBuffer(videoInfo, 10);
+                while(outputBufferIndex >= 0) {
+                    mediaCodec.releaseOutputBuffer(outputBufferIndex, true);
+                    outputBufferIndex = mediaCodec.dequeueOutputBuffer(videoInfo, 10);
+                }
+            }catch (Exception e){
+                LogUtil.e(TAG, "decodeAVPacket :" + e.toString());
+            }
+
+        }else {
+            LogUtil.e(TAG, "mSurface is null! " + (mSurface == null));
+            LogUtil.e(TAG, "data is null! " + (data == null));
+            LogUtil.e(TAG, "mediaCodec is null! " + (mediaCodec == null));
+        }
+    }
+
+    private void releaseMediacodec() {
+        if(mediaCodec != null) {
+            LogUtil.d(TAG, "video decode start release!");
+            try {
+                mediaCodec.flush();
+                mediaCodec.stop();
+                mediaCodec.release();
+            }catch (Exception e){
+                LogUtil.e(TAG, "release Mediacodec exception " + e);
+            }
+
+            mediaCodec = null;
+            mediaFormat = null;
+            videoInfo = null;
+        }
     }
 }

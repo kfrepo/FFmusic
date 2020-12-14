@@ -33,7 +33,8 @@ void *decodeFFmpeg(void *data){
 
     MFFmpeg *mfFmpeg = (MFFmpeg *) data;
     mfFmpeg->decodeFFmpegThread();
-    pthread_exit(&mfFmpeg->decodeThread);
+//    pthread_exit(&mfFmpeg->decodeThread);
+    return 0;
 }
 
 void MFFmpeg::parpared() {
@@ -190,7 +191,7 @@ int MFFmpeg::getCodecContext(AVCodecParameters *codecpar, AVCodecContext **avCod
 
     //配置解码器
     *avCodecContext = avcodec_alloc_context3(avCodec);
-    if (!audio->avCodecContext){
+    if (!*avCodecContext){
         LOGE("can not alloc new decodecctx");
         callJava->onCallError(CHILD_THREAD, 1004, "can not alloc new decodecctx");
         exit = true;
@@ -237,48 +238,43 @@ void MFFmpeg::start() {
     const char* codecName = ((const AVCodec*) video->avCodecContext->codec)->name;
     if (supportMediaCodec = callJava->onCallIsSupportMediaCodec(codecName)){
         LOGE("当前设备支持硬解码当前视频 %s %d", codecName, supportMediaCodec);
+
+        //找到相应解码器的过滤器 FLV/MP4/MKV等结构中，h264需要h264_mp4toannexb处理。添加SPS/PPS等信息。
         if (strcasecmp(codecName, "h264") == 0){
-            //找到相应解码器的过滤器 FLV/MP4/MKV等结构中，h264需要h264_mp4toannexb处理。添加SPS/PPS等信息。
             bsFilter = av_bsf_get_by_name("h264_mp4toannexb");
-            LOGE("av_bsf_get_by_name h264_mp4toannexb");
         } else if (strcasecmp(codecName, "h265") == 0){
             bsFilter = av_bsf_get_by_name("hevc_mp4toannexb");
+        }  else if (strcasecmp(codecName, "vp9") == 0){
+
+        }else {
+            LOGE("未找到相应解码器的过滤器");
         }
 
         if (bsFilter == NULL){
             LOGE("bsFilter == NULL");
-            goto end;
+            supportMediaCodec = false;
         }
 
         if (av_bsf_alloc(bsFilter, &video->abs_ctx) != 0){
             LOGE("初始化过滤器上下文失败 %s", codecName);
             supportMediaCodec = false;
-            goto end;
         }
         if (avcodec_parameters_copy(video->abs_ctx->par_in, video->codecpar) != 0){
             LOGE("添加解码器属性失败 %s", codecName);
             supportMediaCodec = false;
             av_bsf_free(&video->abs_ctx);
             video->abs_ctx = NULL;
-            goto end;
         }
         if (av_bsf_init(video->abs_ctx) != 0){
             LOGE("初始化过滤器上下文失败 %s", codecName);
             supportMediaCodec = false;
             av_bsf_free(&video->abs_ctx);
             video->abs_ctx = NULL;
-            goto end;
         }
         video->abs_ctx->time_base_in = video->time_base;
-        LOGE("video->abs_ctx->time_base_in = video->time_base;");
     } else{
         LOGE("当前设备 不支持硬解码当前视频 %s", codecName);
     }
-
-    end:{
-        LOGE("supportMediaCodec set false");
-//        supportMediaCodec = false;
-    };
 
     if(supportMediaCodec){
         video->codectype = CODEC_MEDIACODEC;
@@ -351,7 +347,7 @@ void MFFmpeg::start() {
         callJava->onCallComplete(CHILD_THREAD);
     }
     exit = true;
-    LOGE("解码完成");
+    LOGE("MFFmpeg start exit!");
 }
 
 void MFFmpeg::pause() {
@@ -375,11 +371,12 @@ void MFFmpeg::resume() {
 
 void MFFmpeg::release() {
 
-    LOGE("开始释放Ffmpeg");
+    LOGE("开始释放Ffmpeg!");
     if (playstatus->exit){
         return;
     }
     playstatus->exit = true;
+    pthread_join(decodeThread, NULL);
 
     pthread_mutex_lock(&init_mutex);
 
@@ -395,14 +392,14 @@ void MFFmpeg::release() {
         av_usleep(1000 * 10);
     }
 
-    LOGE("释放Audio");
+    LOGE("call audio->release");
     if(audio != NULL){
         audio->release();
         delete(audio);
         audio = NULL;
     }
 
-    LOGE("释放Video");
+    LOGE("call video->release");
     if(video != NULL){
         video->release();
         delete(video);
@@ -426,6 +423,7 @@ void MFFmpeg::release() {
         playstatus = NULL;
     }
     pthread_mutex_unlock(&init_mutex);
+    LOGE("释放Ffmpeg成功!");
 }
 
 void MFFmpeg::seek(int64_t seconds) {

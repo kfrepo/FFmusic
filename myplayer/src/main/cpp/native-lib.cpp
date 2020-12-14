@@ -121,6 +121,8 @@ Java_com_wguet_myplayer_player_FFPlayer_jniPrepared(JNIEnv *env, jobject instanc
         playStatus = new PlayStatus();
         mFFmpeg = new MFFmpeg(playStatus, callJava, source);
         mFFmpeg->parpared();
+    } else{
+        LOGI("mFFmpeg != NULL");
     }
 //    env->ReleaseStringUTFChars(source_, source);
 }
@@ -128,7 +130,8 @@ Java_com_wguet_myplayer_player_FFPlayer_jniPrepared(JNIEnv *env, jobject instanc
 void *startCallBack(void *data){
     MFFmpeg *ffmpeg = (MFFmpeg *) data;
     ffmpeg->start();
-    pthread_exit(&thread_start);
+//    pthread_exit(&thread_start);
+    return 0;
 }
 
 extern "C"
@@ -173,9 +176,10 @@ Java_com_wguet_myplayer_player_FFPlayer_jniStop(JNIEnv *env, jobject instance) {
     if (mFFmpeg) {
 
         mFFmpeg->release();
+        pthread_join(thread_start, NULL);
         delete(mFFmpeg);
         mFFmpeg = NULL;
-
+        LOGI("mFFmpeg set NULL");
         if (callJava != NULL) {
             delete(callJava);
             callJava = NULL;
