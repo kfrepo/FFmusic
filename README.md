@@ -1,9 +1,12 @@
 # FFmusic
-基于 Android 平台的视频播放器，支持软解码和硬解码两种方式。
-软解码基于 ffmpeg-3.3.9 库实现，硬解码利用 MediaCodec 实现。
+基于ffmpeg-3.3.9实现的视频播放器。
 
-解码后通过 OpenGL ES 绘制显示 YUV 数据，
-利用 OpenSL ES 播放 PCM 数据，
+### 解码
+软解码：使用 ffmpeg-3.3.9 库进行视频解码。
+硬解码：利用 MediaCodec 实现高效的视频硬解码。
+
+### 播放
+解码后通过 OpenGL ES 绘制显示 YUV 数据，通过 OpenSL ES 播放 PCM 数据。
 同时集成了 SoundTouch 库，实现音频变速变调功能。
 
 
